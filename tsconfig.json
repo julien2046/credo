@@ -8,6 +8,9 @@
     },
     {
       "path": "./apps/store-front"
+    },
+    {
+      "path": "./libs/platform-amplify"
     }
   ]
 }
