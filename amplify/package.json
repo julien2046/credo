@@ -1,3 +1,5 @@
 {
+  "name": "@org/amplify-backend",
+  "private": true,
   "type": "module"
 }

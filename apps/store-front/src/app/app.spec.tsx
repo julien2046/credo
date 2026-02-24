@@ -1,26 +1,35 @@
-import { render } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { render, screen } from '@testing-library/react';
+import { vi } from 'vitest';
+
+vi.mock('aws-amplify/data', () => ({
+  generateClient: () => ({
+    models: {
+      Organization: {
+        list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
+        create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+      },
+      Product: {
+        list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
+        create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+      },
+    },
+  }),
+}));
 
 import App from './app';
 
 describe('App', () => {
   it('should render successfully', () => {
-    const { baseElement } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+    const { baseElement } = render(<App />);
     expect(baseElement).toBeTruthy();
   });
 
-  it('should have a greeting as the title', () => {
-    const { getAllByText } = render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+  it('should render the amplify test heading', () => {
+    render(<App />);
     expect(
-      getAllByText(new RegExp('Welcome @org/store-front', 'gi')).length > 0
+      screen.getByRole('heading', {
+        name: /test amplify data \(organization \+ product\)/i,
+      })
     ).toBeTruthy();
   });
 });
