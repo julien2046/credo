@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { generateClient } from 'aws-amplify/data';
+import { dataClient } from '@org/platform-amplify';
 
 type Organization = {
   id: string;
@@ -16,8 +16,6 @@ type Product = {
   inStock: boolean | null;
   organizationId: string | null;
 };
-
-const client = generateClient<any>();
 
 const getErrorMessage = (errors: unknown) => {
   if (!Array.isArray(errors) || errors.length === 0) return null;
@@ -47,8 +45,8 @@ export function App() {
     setError(null);
 
     const [orgResult, productResult] = await Promise.all([
-      client.models.Organization.list(),
-      client.models.Product.list(),
+      dataClient.models.Organization.list(),
+      dataClient.models.Product.list(),
     ]);
 
     const orgErrors = getErrorMessage(orgResult?.errors);
@@ -105,7 +103,7 @@ export function App() {
     setError(null);
 
     try {
-      const result = await client.models.Organization.create({ name, slug });
+      const result = await dataClient.models.Organization.create({ name, slug });
       const message = getErrorMessage(result?.errors);
 
       if (message) {
@@ -135,7 +133,7 @@ export function App() {
     setError(null);
 
     try {
-      const result = await client.models.Product.create({
+      const result = await dataClient.models.Product.create({
         name,
         price,
         organizationId: selectedOrganizationId,
