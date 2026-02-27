@@ -14,6 +14,36 @@
     },
     {
       "path": "./libs/shared"
+    },
+    {
+      "path": "./libs/ui"
+    },
+    {
+      "path": "./libs/data-access-products"
+    },
+    {
+      "path": "./libs/data-access-checkout"
+    },
+    {
+      "path": "./libs/feature-catalog"
+    },
+    {
+      "path": "./libs/feature-product-details"
+    },
+    {
+      "path": "./libs/feature-cart"
+    },
+    {
+      "path": "./libs/themes-client-a"
+    },
+    {
+      "path": "./libs/themes-client-b"
+    },
+    {
+      "path": "./libs/client-config-client-a"
+    },
+    {
+      "path": "./libs/client-config-client-b"
     }
   ]
 }
