@@ -1,5 +1,5 @@
 {
-  "name": "@org/amplify-backend",
+  "name": "@credo/amplify-backend",
   "private": true,
   "type": "module"
 }

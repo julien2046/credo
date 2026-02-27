@@ -1,0 +1,10 @@
+{
+  "name": "@credo/storefront-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "nx": {
+    "implicitDependencies": [
+      "@credo/storefront"
+    ]
+  }
+}
