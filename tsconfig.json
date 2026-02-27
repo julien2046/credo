@@ -11,6 +11,33 @@
     },
     {
       "path": "./libs/platform-amplify"
+    },
+    {
+      "path": "./libs/shared"
+    },
+    {
+      "path": "./libs/ui"
+    },
+    {
+      "path": "./libs/data-access"
+    },
+    {
+      "path": "./libs/themes/client-a"
+    },
+    {
+      "path": "./libs/themes/client-b"
+    },
+    {
+      "path": "./libs/client-config/client-a"
+    },
+    {
+      "path": "./libs/integrations"
+    },
+    {
+      "path": "./libs/client-config/client-b"
+    },
+    {
+      "path": "./libs/feature"
     }
   ]
 }

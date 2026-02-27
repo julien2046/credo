@@ -55,7 +55,9 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "libs/*"
+    "libs/*",
+    "libs/themes/*",
+    "libs/client-config/*"
   ],
   "dependencies": {
     "aws-amplify": "^6.16.2",
