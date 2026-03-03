@@ -14,4 +14,4 @@ export function configureAmplify(config: AmplifyConfigInput) {
 
 // Keep the client untyped for now; we'll add shared schema typing once data-access
 // libs are in place and we want stronger boundaries.
-export const dataClient = generateClient();
+export const dataClient: any = generateClient();

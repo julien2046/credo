@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { dataClient } from '@credo/platform-amplify';
+import type { StorefrontClientConfig, StorefrontTheme } from '@credo/shared';
 
 type Organization = {
   id: string;
@@ -29,7 +30,12 @@ const getErrorMessage = (errors: unknown) => {
     .join(', ');
 };
 
-export function App() {
+type AppProps = {
+  clientConfig: StorefrontClientConfig;
+  theme: StorefrontTheme;
+};
+
+export function App({ clientConfig, theme }: AppProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [organizationName, setOrganizationName] = useState('');
@@ -161,43 +167,119 @@ export function App() {
     organizations.map((organization) => [organization.id, organization])
   );
 
-  return (
-    <main style={{ maxWidth: 640, margin: '2rem auto', padding: '0 1rem' }}>
-      <h1>Test Amplify Data (Organization + Product)</h1>
+  const sectionCardStyle = {
+    marginBottom: '1.5rem',
+    padding: '1.1rem',
+    borderRadius: 20,
+    border: `1px solid ${theme.borderColor}`,
+    background: theme.surface,
+    boxShadow: '0 18px 40px rgba(0, 0, 0, 0.06)',
+  } as const;
 
-      <section style={{ marginBottom: '1.5rem' }}>
+  const inputStyle = {
+    padding: '0.75rem 0.9rem',
+    borderRadius: 14,
+    border: `1px solid ${theme.borderColor}`,
+    background: 'rgba(255, 255, 255, 0.86)',
+    color: theme.textColor,
+  } as const;
+
+  const buttonStyle = {
+    padding: '0.8rem 1rem',
+    borderRadius: 999,
+    border: 'none',
+    background: theme.accentColor,
+    color: theme.accentContrastColor,
+    fontFamily: theme.accentFontFamily,
+    fontWeight: 700,
+    cursor: 'pointer',
+  } as const;
+
+  return (
+    <main
+      style={{
+        maxWidth: 720,
+        margin: '2rem auto',
+        padding: '0 1rem 3rem',
+        color: theme.textColor,
+        fontFamily: theme.fontFamily,
+      }}
+    >
+      <section
+        style={{
+          marginBottom: '1.5rem',
+          padding: '1.5rem',
+          borderRadius: 28,
+          background: theme.background,
+          border: `1px solid ${theme.borderColor}`,
+          boxShadow: '0 28px 60px rgba(0, 0, 0, 0.08)',
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: theme.accentFontFamily,
+            fontSize: '0.85rem',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: theme.mutedTextColor,
+          }}
+        >
+          {clientConfig.clientId} · {clientConfig.domainLabel}
+        </p>
+        <h1 style={{ margin: '0.4rem 0 0.35rem', fontSize: '2.4rem' }}>
+          {clientConfig.brandName}
+        </h1>
+        <p style={{ margin: 0, color: theme.mutedTextColor }}>
+          {clientConfig.brandTagline}
+        </p>
+        <p style={{ margin: '0.9rem 0 0', fontFamily: theme.accentFontFamily }}>
+          Theme: {theme.name} · Canaux: {clientConfig.enabledChannels.join(', ')}
+        </p>
+      </section>
+
+      <section style={sectionCardStyle}>
+        <h2 style={{ marginTop: 0 }}>Catalogue Amplify (Organization + Product)</h2>
+        <p style={{ marginBottom: 0, color: theme.mutedTextColor }}>
+          Meme logique metier partagee, branding pilote par {clientConfig.clientId}.
+        </p>
+      </section>
+
+      <section style={sectionCardStyle}>
         <h2>Ajouter une organisation</h2>
         <form onSubmit={handleOrganizationSubmit} style={{ display: 'grid', gap: 8 }}>
           <input
             value={organizationName}
             onChange={(event) => setOrganizationName(event.target.value)}
             placeholder="Nom de l'organisation"
-            style={{ padding: '0.6rem' }}
+            style={inputStyle}
           />
           <input
             value={organizationSlug}
             onChange={(event) => setOrganizationSlug(event.target.value)}
             placeholder="Slug (ex: ma-boutique)"
-            style={{ padding: '0.6rem' }}
+            style={inputStyle}
           />
-          <button type="submit">Créer l'organisation</button>
+          <button type="submit" style={buttonStyle}>
+            Créer l'organisation
+          </button>
         </form>
       </section>
 
-      <section style={{ marginBottom: '1.5rem' }}>
+      <section style={sectionCardStyle}>
         <h2>Ajouter un produit</h2>
         <form onSubmit={handleProductSubmit} style={{ display: 'grid', gap: 8 }}>
           <input
             value={productName}
             onChange={(event) => setProductName(event.target.value)}
             placeholder="Nom du produit"
-            style={{ padding: '0.6rem' }}
+            style={inputStyle}
           />
           <input
             value={productDescription}
             onChange={(event) => setProductDescription(event.target.value)}
             placeholder="Description"
-            style={{ padding: '0.6rem' }}
+            style={inputStyle}
           />
           <input
             type="number"
@@ -207,12 +289,12 @@ export function App() {
             value={productPrice}
             onChange={(event) => setProductPrice(event.target.value)}
             placeholder="Prix"
-            style={{ padding: '0.6rem' }}
+            style={inputStyle}
           />
           <select
             value={selectedOrganizationId}
             onChange={(event) => setSelectedOrganizationId(event.target.value)}
-            style={{ padding: '0.6rem' }}
+            style={inputStyle}
           >
             <option value="">Choisir une organisation</option>
             {organizations.map((organization) => (
@@ -221,7 +303,11 @@ export function App() {
               </option>
             ))}
           </select>
-          <button type="submit" disabled={!selectedOrganizationId}>
+          <button
+            type="submit"
+            disabled={!selectedOrganizationId}
+            style={buttonStyle}
+          >
             Créer le produit
           </button>
         </form>
@@ -230,7 +316,7 @@ export function App() {
       {loading && <p>Chargement...</p>}
       {error && <p style={{ color: 'crimson' }}>Erreur: {error}</p>}
 
-      <section style={{ marginBottom: '1.5rem' }}>
+      <section style={sectionCardStyle}>
         <h2>Organisations</h2>
         {!loading && organizations.length === 0 && (
           <p>Aucune organisation pour le moment.</p>
@@ -244,7 +330,7 @@ export function App() {
         </ul>
       </section>
 
-      <section>
+      <section style={sectionCardStyle}>
         <h2>Produits</h2>
         {!loading && products.length === 0 && <p>Aucun produit pour le moment.</p>}
         <ul>
