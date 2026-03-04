@@ -3,8 +3,8 @@ import type { StorefrontTheme } from '@credo/shared';
 export const clientBTheme: StorefrontTheme = {
   id: 'client-b',
   name: 'Commerce Nordique',
-  fontFamily: "'Gill Sans', 'Trebuchet MS', sans-serif",
-  accentFontFamily: "Georgia, 'Times New Roman', serif",
+  fontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif",
+  accentFontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif",
   background:
     'linear-gradient(145deg, rgba(230,244,244,1) 0%, rgba(205,227,222,1) 45%, rgba(184,214,205,1) 100%)',
   surface: 'rgba(246, 252, 251, 0.9)',

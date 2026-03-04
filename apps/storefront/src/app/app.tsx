@@ -35,7 +35,7 @@ type AppProps = {
   theme: StorefrontTheme;
 };
 
-export function App({ clientConfig, theme }: AppProps) {
+export function App({ theme }: AppProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [organizationName, setOrganizationName] = useState('');
@@ -195,6 +195,10 @@ export function App({ clientConfig, theme }: AppProps) {
     cursor: 'pointer',
   } as const;
 
+  const storefrontTitle = 'Credo Storefront';
+  const storefrontSubtitle =
+    'Meme contenu et meme logique metier, seule la palette change selon le client.';
+
   return (
     <main
       style={{
@@ -225,23 +229,23 @@ export function App({ clientConfig, theme }: AppProps) {
             color: theme.mutedTextColor,
           }}
         >
-          {clientConfig.clientId} · {clientConfig.domainLabel}
+          Boutique e-commerce single-tenant
         </p>
         <h1 style={{ margin: '0.4rem 0 0.35rem', fontSize: '2.4rem' }}>
-          {clientConfig.brandName}
+          {storefrontTitle}
         </h1>
         <p style={{ margin: 0, color: theme.mutedTextColor }}>
-          {clientConfig.brandTagline}
+          {storefrontSubtitle}
         </p>
         <p style={{ margin: '0.9rem 0 0', fontFamily: theme.accentFontFamily }}>
-          Theme: {theme.name} · Canaux: {clientConfig.enabledChannels.join(', ')}
+          Variation visuelle pilotee par le theme actif.
         </p>
       </section>
 
       <section style={sectionCardStyle}>
         <h2 style={{ marginTop: 0 }}>Catalogue Amplify (Organization + Product)</h2>
         <p style={{ marginBottom: 0, color: theme.mutedTextColor }}>
-          Meme logique metier partagee, branding pilote par {clientConfig.clientId}.
+          Meme logique metier partagee, variation limitee a la couleur du theme.
         </p>
       </section>
 

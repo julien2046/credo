@@ -3,7 +3,7 @@ import type { StorefrontTheme } from '@credo/shared';
 export const clientATheme: StorefrontTheme = {
   id: 'client-a',
   name: 'Atelier Editorial',
-  fontFamily: "Georgia, 'Times New Roman', serif",
+  fontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif",
   accentFontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif",
   background:
     'linear-gradient(135deg, rgba(247,239,226,1) 0%, rgba(230,214,192,1) 48%, rgba(215,192,161,1) 100%)',
