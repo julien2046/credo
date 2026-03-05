@@ -1,11 +1,5 @@
-import { type FormEvent, useEffect, useState } from 'react';
-import {
-  Link,
-  Route,
-  Routes,
-  useLocation,
-  useParams,
-} from 'react-router-dom';
+import { type SubmitEvent, useEffect, useState } from 'react';
+import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import {
   confirmSignIn,
   fetchAuthSession,
@@ -125,8 +119,8 @@ function SignInCard({
   loading: boolean;
   onChangeEmail: (value: string) => void;
   onChangeCode: (value: string) => void;
-  onRequestCode: (event: FormEvent<HTMLFormElement>) => Promise<void>;
-  onConfirmCode: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  onRequestCode: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  onConfirmCode: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
 }) {
   const inputStyle = {
     width: '100%',
@@ -162,7 +156,11 @@ function SignInCard({
             placeholder="you@shop.com"
             style={inputStyle}
           />
-          <button type="submit" disabled={loading || !email.trim()} style={buttonStyle}>
+          <button
+            type="submit"
+            disabled={loading || !email.trim()}
+            style={buttonStyle}
+          >
             {loading ? 'Envoi...' : 'Envoyer un code'}
           </button>
         </form>
@@ -180,17 +178,29 @@ function SignInCard({
             placeholder="123456"
             style={inputStyle}
           />
-          <button type="submit" disabled={loading || !code.trim()} style={buttonStyle}>
+          <button
+            type="submit"
+            disabled={loading || !code.trim()}
+            style={buttonStyle}
+          >
             {loading ? 'Validation...' : 'Valider le code'}
           </button>
         </form>
       )}
-      {error && <p style={{ color: 'crimson', marginBottom: 0 }}>Erreur: {error}</p>}
+      {error && (
+        <p style={{ color: 'crimson', marginBottom: 0 }}>Erreur: {error}</p>
+      )}
     </Card>
   );
 }
 
-function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: string }) {
+function AdminCatalog({
+  theme,
+  currency,
+}: {
+  theme: StorefrontTheme;
+  currency: string;
+}) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [organizationName, setOrganizationName] = useState('');
@@ -273,7 +283,9 @@ function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: s
     })();
   }, []);
 
-  const handleOrganizationSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleOrganizationSubmit = async (
+    event: SubmitEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     const name = organizationName.trim();
@@ -283,7 +295,10 @@ function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: s
     setError(null);
 
     try {
-      const result = await dataClient.models.Organization.create({ name, slug });
+      const result = await dataClient.models.Organization.create({
+        name,
+        slug,
+      });
       const message = getErrorMessage(result?.errors);
 
       if (message) {
@@ -301,7 +316,7 @@ function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: s
     }
   };
 
-  const handleProductSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleProductSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const name = productName.trim();
@@ -351,7 +366,10 @@ function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: s
       </Card>
 
       <Card title="Ajouter une organisation" theme={theme}>
-        <form onSubmit={handleOrganizationSubmit} style={{ display: 'grid', gap: 8 }}>
+        <form
+          onSubmit={handleOrganizationSubmit}
+          style={{ display: 'grid', gap: 8 }}
+        >
           <input
             value={organizationName}
             onChange={(event) => setOrganizationName(event.target.value)}
@@ -371,7 +389,10 @@ function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: s
       </Card>
 
       <Card title="Ajouter un produit" theme={theme}>
-        <form onSubmit={handleProductSubmit} style={{ display: 'grid', gap: 8 }}>
+        <form
+          onSubmit={handleProductSubmit}
+          style={{ display: 'grid', gap: 8 }}
+        >
           <input
             value={productName}
             onChange={(event) => setProductName(event.target.value)}
@@ -433,7 +454,9 @@ function AdminCatalog({ theme, currency }: { theme: StorefrontTheme; currency: s
       </Card>
 
       <Card title="Produits" theme={theme}>
-        {!loading && products.length === 0 && <p>Aucun produit pour le moment.</p>}
+        {!loading && products.length === 0 && (
+          <p>Aucun produit pour le moment.</p>
+        )}
         <ul>
           {products.map((product) => {
             const organization = product.organizationId
@@ -597,7 +620,7 @@ export function App({ clientConfig, theme }: AppProps) {
     void refreshSession();
   }, []);
 
-  const handleRequestOtp = async (event: FormEvent<HTMLFormElement>) => {
+  const handleRequestOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError(null);
     setAuthLoading(true);
@@ -626,14 +649,16 @@ export function App({ clientConfig, theme }: AppProps) {
       setAuthError(`Etape de connexion non supportee: ${step}`);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Impossible de lancer la connexion OTP.';
+        err instanceof Error
+          ? err.message
+          : 'Impossible de lancer la connexion OTP.';
       setAuthError(message);
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleConfirmOtp = async (event: FormEvent<HTMLFormElement>) => {
+  const handleConfirmOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError(null);
     setAuthLoading(true);
@@ -644,7 +669,9 @@ export function App({ clientConfig, theme }: AppProps) {
       });
 
       if (result.nextStep.signInStep !== 'DONE') {
-        setAuthError(`Etape de connexion non finalisee: ${result.nextStep.signInStep}`);
+        setAuthError(
+          `Etape de connexion non finalisee: ${result.nextStep.signInStep}`
+        );
         return;
       }
 
@@ -652,8 +679,7 @@ export function App({ clientConfig, theme }: AppProps) {
       setOtpStep('request-code');
       await refreshSession();
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Code OTP invalide.';
+      const message = err instanceof Error ? err.message : 'Code OTP invalide.';
       setAuthError(message);
     } finally {
       setAuthLoading(false);
@@ -724,11 +750,19 @@ export function App({ clientConfig, theme }: AppProps) {
           Credo Storefront
         </h1>
         <p style={{ margin: 0, color: theme.mutedTextColor }}>
-          Meme contenu et meme logique metier, seule la palette change selon le client.
+          Meme contenu et meme logique metier, seule la palette change selon le
+          client.
         </p>
       </section>
 
-      <nav style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <nav
+        style={{
+          display: 'flex',
+          gap: 12,
+          flexWrap: 'wrap',
+          marginBottom: '1rem',
+        }}
+      >
         <Link to="/">/</Link>
         <Link to="/c/featured">/c/:categorySlug</Link>
         <Link to="/p/demo-product">/p/:productSlug</Link>
@@ -776,7 +810,10 @@ export function App({ clientConfig, theme }: AppProps) {
             />
           }
         />
-        <Route path="/c/:categorySlug" element={<CategoryPage theme={theme} />} />
+        <Route
+          path="/c/:categorySlug"
+          element={<CategoryPage theme={theme} />}
+        />
         <Route path="/p/:productSlug" element={<ProductPage theme={theme} />} />
         <Route path="/promo/:promoSlug" element={<PromoPage theme={theme} />} />
         <Route
@@ -849,7 +886,9 @@ export function App({ clientConfig, theme }: AppProps) {
 
         <Route
           path="/api/stripe/webhook"
-          element={<ServerRoutePage pathLabel="/api/stripe/webhook" theme={theme} />}
+          element={
+            <ServerRoutePage pathLabel="/api/stripe/webhook" theme={theme} />
+          }
         />
         <Route
           path="/api/ai/*"
