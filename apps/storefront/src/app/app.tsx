@@ -563,7 +563,7 @@ function AdminGuard({
   }
 
   if (auth.status === 'signedOut') {
-    return <>{signInNode}</>;
+    return signInNode;
   }
 
   if (auth.role !== 'MERCHANT') {
@@ -576,7 +576,7 @@ function AdminGuard({
     );
   }
 
-  return <>{children}</>;
+  return children;
 }
 
 export function App({ clientConfig, theme }: AppProps) {
