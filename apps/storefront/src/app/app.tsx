@@ -21,40 +21,8 @@ import type {
   ServerRoutePageProps,
   SignInCardProps,
   ThemeOnlyProps,
-  UserRole,
 } from './app.types';
-
-const getErrorMessage = (errors: unknown) => {
-  if (!Array.isArray(errors) || errors.length === 0) return null;
-
-  return errors
-    .map((item) =>
-      typeof item === 'object' && item && 'message' in item
-        ? String((item as { message?: string }).message ?? 'Unknown error')
-        : 'Unknown error'
-    )
-    .join(', ');
-};
-
-const parseGroups = (payload: Record<string, unknown>) => {
-  const raw = payload['cognito:groups'];
-
-  if (Array.isArray(raw)) {
-    return raw.filter((value): value is string => typeof value === 'string');
-  }
-
-  if (typeof raw === 'string' && raw.length > 0) {
-    return [raw];
-  }
-
-  return [];
-};
-
-const resolveRoleFromSession = (payload: Record<string, unknown>): UserRole => {
-  const groups = parseGroups(payload);
-  if (groups.includes('MERCHANT')) return 'MERCHANT';
-  return 'CUSTOMER';
-};
+import { getErrorMessage, resolveRoleFromSession } from './app.utils';
 
 function Card({ title, theme, children }: CardProps) {
   return (
