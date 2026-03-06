@@ -19,7 +19,10 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: false,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          allow: [
+            '^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$',
+            '^(\\.{1,2}/)+amplify_outputs\\.json$',
+          ],
           depConstraints: [
             {
               sourceTag: '*',
