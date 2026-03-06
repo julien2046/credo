@@ -24,6 +24,9 @@ import type {
 } from './app.types';
 import { getErrorMessage, resolveRoleFromSession } from './app.utils';
 
+/**
+ * Affiche une section visuelle standard (carte) avec titre et contenu.
+ */
 function Card({ title, theme, children }: CardProps) {
   return (
     <section
@@ -42,6 +45,9 @@ function Card({ title, theme, children }: CardProps) {
   );
 }
 
+/**
+ * Gère le flux de connexion OTP (demande et validation du code email).
+ */
 function SignInCard({
   theme,
   otpStep,
@@ -126,6 +132,9 @@ function SignInCard({
   );
 }
 
+/**
+ * Backoffice produits/organisations avec listing et création via Amplify Data.
+ */
 function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -157,6 +166,9 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     cursor: 'pointer',
   } as const;
 
+  /**
+   * Charge les organisations/produits et maintient la sélection courante valide.
+   */
   const loadData = async () => {
     setError(null);
 
@@ -209,6 +221,9 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     })();
   }, []);
 
+  /**
+   * Crée une organisation puis recharge les données de catalogue.
+   */
   const handleOrganizationSubmit = async (
     event: SubmitEvent<HTMLFormElement>
   ) => {
@@ -242,6 +257,9 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     }
   };
 
+  /**
+   * Crée un produit rattaché à l'organisation sélectionnée.
+   */
   const handleProductSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -402,6 +420,9 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   );
 }
 
+/**
+ * Affiche une page placeholder simple pour les routes non implémentées.
+ */
 function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
   return (
     <Card title={title} theme={theme}>
@@ -410,6 +431,9 @@ function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
   );
 }
 
+/**
+ * Placeholder pour la route publique de catégorie.
+ */
 function CategoryPage({ theme }: ThemeOnlyProps) {
   const params = useParams();
   return (
@@ -421,6 +445,9 @@ function CategoryPage({ theme }: ThemeOnlyProps) {
   );
 }
 
+/**
+ * Placeholder pour la route publique de produit.
+ */
 function ProductPage({ theme }: ThemeOnlyProps) {
   const params = useParams();
   return (
@@ -432,6 +459,9 @@ function ProductPage({ theme }: ThemeOnlyProps) {
   );
 }
 
+/**
+ * Placeholder pour la route publique de promotion.
+ */
 function PromoPage({ theme }: ThemeOnlyProps) {
   const params = useParams();
   return (
@@ -443,6 +473,9 @@ function PromoPage({ theme }: ThemeOnlyProps) {
   );
 }
 
+/**
+ * Placeholder pour les routes API qui doivent vivre côté backend.
+ */
 function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
   return (
     <RoutePlaceholder
@@ -453,6 +486,9 @@ function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
   );
 }
 
+/**
+ * Protège les routes admin selon l'état de session et le rôle MERCHANT.
+ */
 function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
   if (auth.status === 'loading') {
     return (
@@ -481,6 +517,9 @@ function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
   return children;
 }
 
+/**
+ * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
+ */
 export function App({ clientConfig, theme }: AppProps) {
   const location = useLocation();
   const [auth, setAuth] = useState<AuthState>({
@@ -494,6 +533,9 @@ export function App({ clientConfig, theme }: AppProps) {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  /**
+   * Recharge l'état de session Cognito et déduit le rôle applicatif.
+   */
   const refreshSession = async () => {
     try {
       const user = await getCurrentUser();
@@ -522,6 +564,9 @@ export function App({ clientConfig, theme }: AppProps) {
     void refreshSession();
   }, []);
 
+  /**
+   * Démarre la connexion passwordless par email OTP.
+   */
   const handleRequestOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError(null);
@@ -560,6 +605,9 @@ export function App({ clientConfig, theme }: AppProps) {
     }
   };
 
+  /**
+   * Valide le code OTP saisi et finalise la connexion.
+   */
   const handleConfirmOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError(null);
@@ -588,6 +636,9 @@ export function App({ clientConfig, theme }: AppProps) {
     }
   };
 
+  /**
+   * Termine la session utilisateur et réinitialise l'état local d'auth.
+   */
   const handleSignOut = async () => {
     await signOut();
     setAuth({
