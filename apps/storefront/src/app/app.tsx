@@ -8,38 +8,21 @@ import {
   signOut,
 } from 'aws-amplify/auth';
 import { dataClient } from '@credo/platform-amplify';
-import type { StorefrontClientConfig, StorefrontTheme } from '@credo/shared';
-
-type Organization = {
-  id: string;
-  name: string | null;
-  slug: string | null;
-};
-
-type Product = {
-  id: string;
-  name: string | null;
-  description: string | null;
-  price: number | null;
-  currency: string | null;
-  inStock: boolean | null;
-  organizationId: string | null;
-};
-
-type UserRole = 'MERCHANT' | 'CUSTOMER';
-type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
-type OtpStep = 'request-code' | 'confirm-code';
-
-type AuthState = {
-  status: AuthStatus;
-  role: UserRole | null;
-  email: string | null;
-};
-
-type AppProps = {
-  clientConfig: StorefrontClientConfig;
-  theme: StorefrontTheme;
-};
+import type {
+  AdminCatalogProps,
+  AdminGuardProps,
+  AppProps,
+  AuthState,
+  CardProps,
+  Organization,
+  OtpStep,
+  Product,
+  RoutePlaceholderProps,
+  ServerRoutePageProps,
+  SignInCardProps,
+  ThemeOnlyProps,
+  UserRole,
+} from './app.types';
 
 const getErrorMessage = (errors: unknown) => {
   if (!Array.isArray(errors) || errors.length === 0) return null;
@@ -73,15 +56,7 @@ const resolveRoleFromSession = (payload: Record<string, unknown>): UserRole => {
   return 'CUSTOMER';
 };
 
-function Card({
-  title,
-  theme,
-  children,
-}: {
-  title: string;
-  theme: StorefrontTheme;
-  children: React.ReactNode;
-}) {
+function Card({ title, theme, children }: CardProps) {
   return (
     <section
       style={{
@@ -110,18 +85,7 @@ function SignInCard({
   onChangeCode,
   onRequestCode,
   onConfirmCode,
-}: {
-  theme: StorefrontTheme;
-  otpStep: OtpStep;
-  email: string;
-  code: string;
-  error: string | null;
-  loading: boolean;
-  onChangeEmail: (value: string) => void;
-  onChangeCode: (value: string) => void;
-  onRequestCode: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-  onConfirmCode: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-}) {
+}: SignInCardProps) {
   const inputStyle = {
     width: '100%',
     padding: '0.75rem 0.9rem',
@@ -194,13 +158,7 @@ function SignInCard({
   );
 }
 
-function AdminCatalog({
-  theme,
-  currency,
-}: {
-  theme: StorefrontTheme;
-  currency: string;
-}) {
+function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [organizationName, setOrganizationName] = useState('');
@@ -476,15 +434,7 @@ function AdminCatalog({
   );
 }
 
-function RoutePlaceholder({
-  title,
-  details,
-  theme,
-}: {
-  title: string;
-  details: string;
-  theme: StorefrontTheme;
-}) {
+function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
   return (
     <Card title={title} theme={theme}>
       <p style={{ margin: 0, color: theme.mutedTextColor }}>{details}</p>
@@ -492,7 +442,7 @@ function RoutePlaceholder({
   );
 }
 
-function CategoryPage({ theme }: { theme: StorefrontTheme }) {
+function CategoryPage({ theme }: ThemeOnlyProps) {
   const params = useParams();
   return (
     <RoutePlaceholder
@@ -503,7 +453,7 @@ function CategoryPage({ theme }: { theme: StorefrontTheme }) {
   );
 }
 
-function ProductPage({ theme }: { theme: StorefrontTheme }) {
+function ProductPage({ theme }: ThemeOnlyProps) {
   const params = useParams();
   return (
     <RoutePlaceholder
@@ -514,7 +464,7 @@ function ProductPage({ theme }: { theme: StorefrontTheme }) {
   );
 }
 
-function PromoPage({ theme }: { theme: StorefrontTheme }) {
+function PromoPage({ theme }: ThemeOnlyProps) {
   const params = useParams();
   return (
     <RoutePlaceholder
@@ -525,13 +475,7 @@ function PromoPage({ theme }: { theme: StorefrontTheme }) {
   );
 }
 
-function ServerRoutePage({
-  pathLabel,
-  theme,
-}: {
-  pathLabel: string;
-  theme: StorefrontTheme;
-}) {
+function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
   return (
     <RoutePlaceholder
       title="Route server reservee"
@@ -541,17 +485,7 @@ function ServerRoutePage({
   );
 }
 
-function AdminGuard({
-  auth,
-  theme,
-  children,
-  signInNode,
-}: {
-  auth: AuthState;
-  theme: StorefrontTheme;
-  children: React.ReactNode;
-  signInNode: React.ReactNode;
-}) {
+function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
   if (auth.status === 'loading') {
     return (
       <RoutePlaceholder

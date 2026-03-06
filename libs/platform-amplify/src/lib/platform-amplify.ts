@@ -32,6 +32,7 @@ type ProductModel = {
 };
 
 type OrganizationCreateInput = Pick<OrganizationModel, 'name' | 'slug'>;
+
 type ProductCreateInput = {
   name: string;
   description?: string;
@@ -44,7 +45,9 @@ export type DataClient = {
   models: {
     Organization: {
       list: () => ListResult<OrganizationModel>;
-      create: (input: OrganizationCreateInput) => CreateResult<OrganizationModel>;
+      create: (
+        input: OrganizationCreateInput
+      ) => CreateResult<OrganizationModel>;
     };
     Product: {
       list: () => ListResult<ProductModel>;
