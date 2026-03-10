@@ -1,0 +1,31 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@11.11.0
+2 info using node@v22.20.0
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/julienbanchetti/Dev/REACT/credo/.npmrc
+5 silly config load:file:/Users/julienbanchetti/.npmrc
+6 silly config load:file:/usr/local/etc/npmrc
+7 verbose title npm ci
+8 verbose argv "ci" "--include" "optional" "--cache" ".npm" "--loglevel" "verbose"
+9 verbose logfile logs-max:10 dir:/Users/julienbanchetti/Dev/REACT/credo/.npm/_logs/2026-03-09T14_46_08_714Z-
+10 verbose logfile /Users/julienbanchetti/Dev/REACT/credo/.npm/_logs/2026-03-09T14_46_08_714Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+13 silly packumentCache heap:2197815296 maxSize:549453824 maxEntrySize:274726912
+14 silly idealTree buildDeps
+15 silly fetch manifest @napi-rs/nice-android-arm-eabi@1.1.1
+16 silly packumentCache full:https://registry.npmjs.org/@napi-rs%2fnice-android-arm-eabi cache-miss
+17 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-android-arm-eabi attempt 1 failed with ENOTFOUND
+18 http fetch GET https://registry.npmjs.org/npm attempt 2 failed with ENOTFOUND
+19 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-android-arm-eabi attempt 2 failed with ENOTFOUND
+20 http fetch GET https://registry.npmjs.org/npm attempt 3 failed with ENOTFOUND
+21 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-android-arm-eabi attempt 3 failed with ENOTFOUND
+22 silly fetch manifest @napi-rs/nice-android-arm64@1.1.1
+23 silly packumentCache full:https://registry.npmjs.org/@napi-rs%2fnice-android-arm64 cache-miss
+24 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-android-arm64 attempt 1 failed with ENOTFOUND
+25 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-android-arm64 attempt 2 failed with ENOTFOUND
+26 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-android-arm64 attempt 3 failed with ENOTFOUND
+27 silly fetch manifest @napi-rs/nice-darwin-x64@1.1.1
+28 silly packumentCache full:https://registry.npmjs.org/@napi-rs%2fnice-darwin-x64 cache-miss
+29 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-darwin-x64 attempt 1 failed with ENOTFOUND
+30 http fetch GET https://registry.npmjs.org/@napi-rs%2fnice-darwin-x64 attempt 2 failed with ENOTFOUND
