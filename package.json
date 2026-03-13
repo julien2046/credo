@@ -5,7 +5,7 @@
   "scripts": {},
   "private": true,
   "devDependencies": {
-    "@aws-amplify/backend": "^1.21.0",
+    "@aws-amplify/backend": "^1.21.1",
     "@aws-amplify/backend-cli": "^1.8.2",
     "@babel/core": "^7.14.5",
     "@babel/preset-react": "^7.14.5",
@@ -63,7 +63,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.9",
-    "aws-amplify": "^6.16.2",
+    "aws-amplify": "^6.16.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "6.30.3"
