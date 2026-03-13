@@ -6,13 +6,6 @@ import {
   useParams,
 } from 'react-router-dom';
 import {
-  confirmSignIn,
-  fetchAuthSession,
-  getCurrentUser,
-  signIn,
-  signOut,
-} from 'aws-amplify/auth';
-import {
   Alert,
   Box,
   Button,
@@ -37,17 +30,16 @@ import type {
   AdminCatalogProps,
   AdminGuardProps,
   AppProps,
-  AuthState,
   CardProps,
   Organization,
-  OtpStep,
   Product,
   RoutePlaceholderProps,
   ServerRoutePageProps,
   SignInCardProps,
   ThemeOnlyProps,
 } from './app.types';
-import { getErrorMessage, resolveRoleFromSession } from './app.utils';
+import { getErrorMessage } from './app.utils';
+import { useStorefrontAuth } from './use-storefront-auth';
 
 /**
  * Affiche une section visuelle standard (carte) avec titre et contenu.
@@ -610,133 +602,19 @@ function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
  * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
  */
 export function App({ clientConfig, theme }: AppProps) {
-  const [auth, setAuth] = useState<AuthState>({
-    status: 'loading',
-    role: null,
-    email: null,
-  });
-  const [otpStep, setOtpStep] = useState<OtpStep>('request-code');
-  const [email, setEmail] = useState('');
-  const [otpCode, setOtpCode] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  /**
-   * Recharge l'état de session Cognito et déduit le rôle applicatif.
-   */
-  const refreshSession = async () => {
-    try {
-      const user = await getCurrentUser();
-      const session = await fetchAuthSession();
-      const payload = (session.tokens?.idToken?.payload ?? {}) as Record<
-        string,
-        unknown
-      >;
-      const role = resolveRoleFromSession(payload);
-
-      setAuth({
-        status: 'signedIn',
-        role,
-        email: user?.signInDetails?.loginId ?? user?.username ?? null,
-      });
-    } catch {
-      setAuth({
-        status: 'signedOut',
-        role: null,
-        email: null,
-      });
-    }
-  };
-
-  useEffect(() => {
-    void refreshSession();
-  }, []);
-
-  /**
-   * Démarre la connexion passwordless par email OTP.
-   */
-  const handleRequestOtp = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setAuthError(null);
-    setAuthLoading(true);
-
-    try {
-      const result = await signIn({
-        username: email.trim(),
-        options: {
-          authFlowType: 'USER_AUTH',
-          preferredChallenge: 'EMAIL_OTP',
-        },
-      });
-
-      const step = result.nextStep.signInStep;
-
-      if (step === 'DONE') {
-        await refreshSession();
-        return;
-      }
-
-      if (step === 'CONFIRM_SIGN_IN_WITH_EMAIL_CODE') {
-        setOtpStep('confirm-code');
-        return;
-      }
-
-      setAuthError(`Etape de connexion non supportee: ${step}`);
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Impossible de lancer la connexion OTP.';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  /**
-   * Valide le code OTP saisi et finalise la connexion.
-   */
-  const handleConfirmOtp = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setAuthError(null);
-    setAuthLoading(true);
-
-    try {
-      const result = await confirmSignIn({
-        challengeResponse: otpCode.trim(),
-      });
-
-      if (result.nextStep.signInStep !== 'DONE') {
-        setAuthError(
-          `Etape de connexion non finalisee: ${result.nextStep.signInStep}`
-        );
-        return;
-      }
-
-      setOtpCode('');
-      setOtpStep('request-code');
-      await refreshSession();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Code OTP invalide.';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  /**
-   * Termine la session utilisateur et réinitialise l'état local d'auth.
-   */
-  const handleSignOut = async () => {
-    await signOut();
-    setAuth({
-      status: 'signedOut',
-      role: null,
-      email: null,
-    });
-    setOtpStep('request-code');
-    setOtpCode('');
-  };
+  const {
+    auth,
+    otpStep,
+    email,
+    otpCode,
+    authLoading,
+    authError,
+    setEmail,
+    setOtpCode,
+    handleRequestOtp,
+    handleConfirmOtp,
+    handleSignOut,
+  } = useStorefrontAuth();
 
   const muiTheme = createTheme({
     palette: {

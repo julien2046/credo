@@ -77,3 +77,17 @@ export type AdminGuardProps = {
   children: ReactNode;
   signInNode: ReactNode;
 };
+
+export type StorefrontAuthHookResult = {
+  auth: AuthState;
+  otpStep: OtpStep;
+  email: string;
+  otpCode: string;
+  authLoading: boolean;
+  authError: string | null;
+  setEmail: (value: string) => void;
+  setOtpCode: (value: string) => void;
+  handleRequestOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  handleConfirmOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  handleSignOut: () => Promise<void>;
+};
