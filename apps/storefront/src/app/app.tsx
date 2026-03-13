@@ -1,5 +1,10 @@
 import { type SubmitEvent, useEffect, useState } from 'react';
-import { Link, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import {
+  Link as RouterLink,
+  Route,
+  Routes,
+  useParams,
+} from 'react-router-dom';
 import {
   confirmSignIn,
   fetchAuthSession,
@@ -7,6 +12,26 @@ import {
   signIn,
   signOut,
 } from 'aws-amplify/auth';
+import {
+  Alert,
+  Box,
+  Button,
+  Card as MuiCard,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  MenuItem,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { alpha, createTheme, ThemeProvider } from '@mui/material/styles';
 import { dataClient } from '@credo/platform-amplify';
 import type {
   AdminCatalogProps,
@@ -29,19 +54,22 @@ import { getErrorMessage, resolveRoleFromSession } from './app.utils';
  */
 function Card({ title, theme, children }: CardProps) {
   return (
-    <section
-      style={{
-        marginBottom: '1rem',
-        padding: '1.1rem',
-        borderRadius: 20,
+    <MuiCard
+      elevation={0}
+      sx={{
+        borderRadius: 4,
         border: `1px solid ${theme.borderColor}`,
-        background: theme.surface,
-        boxShadow: '0 18px 40px rgba(0, 0, 0, 0.06)',
+        backgroundColor: theme.surface,
+        boxShadow: `0 18px 40px ${alpha(theme.textColor, 0.08)}`,
       }}
     >
-      <h2 style={{ marginTop: 0 }}>{title}</h2>
-      {children}
-    </section>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h5" sx={{ mb: 2, fontWeight: 700 }}>
+          {title}
+        </Typography>
+        {children}
+      </CardContent>
+    </MuiCard>
   );
 }
 
@@ -60,73 +88,79 @@ function SignInCard({
   onRequestCode,
   onConfirmCode,
 }: SignInCardProps) {
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 0.9rem',
-    borderRadius: 14,
-    border: `1px solid ${theme.borderColor}`,
-    background: 'rgba(255, 255, 255, 0.86)',
-    color: theme.textColor,
-  } as const;
-
-  const buttonStyle = {
-    padding: '0.8rem 1rem',
-    borderRadius: 999,
-    border: 'none',
-    background: theme.accentColor,
-    color: theme.accentContrastColor,
-    fontFamily: theme.accentFontFamily,
-    fontWeight: 700,
-    cursor: 'pointer',
-  } as const;
-
   return (
     <Card title="Connexion admin (email OTP)" theme={theme}>
       {otpStep === 'request-code' ? (
-        <form onSubmit={onRequestCode} style={{ display: 'grid', gap: 8 }}>
-          <label htmlFor="email">Email</label>
-          <input
+        <Box
+          component="form"
+          onSubmit={onRequestCode}
+          sx={{ display: 'grid', gap: 2 }}
+        >
+          <TextField
             id="email"
+            label="Email"
             type="email"
             required
+            fullWidth
             value={email}
             onChange={(event) => onChangeEmail(event.target.value)}
             placeholder="you@shop.com"
-            style={inputStyle}
+            variant="outlined"
           />
-          <button
+          <Button
             type="submit"
             disabled={loading || !email.trim()}
-            style={buttonStyle}
+            variant="contained"
+            size="large"
+            sx={{
+              borderRadius: 999,
+              py: 1.3,
+              fontFamily: theme.accentFontFamily,
+              fontWeight: 700,
+            }}
           >
             {loading ? 'Envoi...' : 'Envoyer un code'}
-          </button>
-        </form>
+          </Button>
+        </Box>
       ) : (
-        <form onSubmit={onConfirmCode} style={{ display: 'grid', gap: 8 }}>
-          <p style={{ margin: 0 }}>
-            Un code a été envoyé à <strong>{email}</strong>.
-          </p>
-          <label htmlFor="otp-code">Code OTP</label>
-          <input
+        <Box
+          component="form"
+          onSubmit={onConfirmCode}
+          sx={{ display: 'grid', gap: 2 }}
+        >
+          <Alert severity="info" sx={{ borderRadius: 3 }}>
+            Un code a ete envoye a <strong>{email}</strong>.
+          </Alert>
+          <TextField
             id="otp-code"
+            label="Code OTP"
             required
+            fullWidth
             value={code}
             onChange={(event) => onChangeCode(event.target.value)}
             placeholder="123456"
-            style={inputStyle}
+            variant="outlined"
           />
-          <button
+          <Button
             type="submit"
             disabled={loading || !code.trim()}
-            style={buttonStyle}
+            variant="contained"
+            size="large"
+            sx={{
+              borderRadius: 999,
+              py: 1.3,
+              fontFamily: theme.accentFontFamily,
+              fontWeight: 700,
+            }}
           >
             {loading ? 'Validation...' : 'Valider le code'}
-          </button>
-        </form>
+          </Button>
+        </Box>
       )}
       {error && (
-        <p style={{ color: 'crimson', marginBottom: 0 }}>Erreur: {error}</p>
+        <Alert severity="error" sx={{ mt: 2, borderRadius: 3 }}>
+          {error}
+        </Alert>
       )}
     </Card>
   );
@@ -146,25 +180,6 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const inputStyle = {
-    padding: '0.75rem 0.9rem',
-    borderRadius: 14,
-    border: `1px solid ${theme.borderColor}`,
-    background: 'rgba(255, 255, 255, 0.86)',
-    color: theme.textColor,
-  } as const;
-
-  const buttonStyle = {
-    padding: '0.8rem 1rem',
-    borderRadius: 999,
-    border: 'none',
-    background: theme.accentColor,
-    color: theme.accentContrastColor,
-    fontFamily: theme.accentFontFamily,
-    fontWeight: 700,
-    cursor: 'pointer',
-  } as const;
 
   /**
    * Charge les organisations/produits et maintient la sélection courante valide.
@@ -302,121 +317,195 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   );
 
   return (
-    <>
+    <Stack spacing={3}>
       <Card title="Catalogue Amplify (Organization + Product)" theme={theme}>
-        <p style={{ marginBottom: 0, color: theme.mutedTextColor }}>
+        <Typography sx={{ color: theme.mutedTextColor }}>
           Meme logique metier partagee, variation limitee a la couleur du theme.
-        </p>
+        </Typography>
       </Card>
 
-      <Card title="Ajouter une organisation" theme={theme}>
-        <form
-          onSubmit={handleOrganizationSubmit}
-          style={{ display: 'grid', gap: 8 }}
-        >
-          <input
-            value={organizationName}
-            onChange={(event) => setOrganizationName(event.target.value)}
-            placeholder="Nom de l'organisation"
-            style={inputStyle}
-          />
-          <input
-            value={organizationSlug}
-            onChange={(event) => setOrganizationSlug(event.target.value)}
-            placeholder="Slug (ex: ma-boutique)"
-            style={inputStyle}
-          />
-          <button type="submit" style={buttonStyle}>
-            Creer l'organisation
-          </button>
-        </form>
-      </Card>
-
-      <Card title="Ajouter un produit" theme={theme}>
-        <form
-          onSubmit={handleProductSubmit}
-          style={{ display: 'grid', gap: 8 }}
-        >
-          <input
-            value={productName}
-            onChange={(event) => setProductName(event.target.value)}
-            placeholder="Nom du produit"
-            style={inputStyle}
-          />
-          <input
-            value={productDescription}
-            onChange={(event) => setProductDescription(event.target.value)}
-            placeholder="Description"
-            style={inputStyle}
-          />
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.01"
-            value={productPrice}
-            onChange={(event) => setProductPrice(event.target.value)}
-            placeholder="Prix"
-            style={inputStyle}
-          />
-          <select
-            value={selectedOrganizationId}
-            onChange={(event) => setSelectedOrganizationId(event.target.value)}
-            style={inputStyle}
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 3,
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+        }}
+      >
+        <Card title="Ajouter une organisation" theme={theme}>
+          <Box
+            component="form"
+            onSubmit={handleOrganizationSubmit}
+            sx={{ display: 'grid', gap: 2 }}
           >
-            <option value="">Choisir une organisation</option>
-            {organizations.map((organization) => (
-              <option key={organization.id} value={organization.id}>
-                {organization.name}
-              </option>
+            <TextField
+              label="Nom de l'organisation"
+              value={organizationName}
+              onChange={(event) => setOrganizationName(event.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Slug"
+              value={organizationSlug}
+              onChange={(event) => setOrganizationSlug(event.target.value)}
+              placeholder="ma-boutique"
+              fullWidth
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              sx={{
+                borderRadius: 999,
+                py: 1.3,
+                fontFamily: theme.accentFontFamily,
+                fontWeight: 700,
+              }}
+            >
+              Creer l'organisation
+            </Button>
+          </Box>
+        </Card>
+
+        <Card title="Ajouter un produit" theme={theme}>
+          <Box
+            component="form"
+            onSubmit={handleProductSubmit}
+            sx={{ display: 'grid', gap: 2 }}
+          >
+            <TextField
+              label="Nom du produit"
+              value={productName}
+              onChange={(event) => setProductName(event.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Description"
+              value={productDescription}
+              onChange={(event) => setProductDescription(event.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Prix"
+              type="number"
+              inputProps={{ min: 0, step: 0.01 }}
+              value={productPrice}
+              onChange={(event) => setProductPrice(event.target.value)}
+              fullWidth
+            />
+            <TextField
+              select
+              label="Organisation"
+              value={selectedOrganizationId}
+              onChange={(event) => setSelectedOrganizationId(event.target.value)}
+              fullWidth
+            >
+              <MenuItem value="">Choisir une organisation</MenuItem>
+              {organizations.map((organization) => (
+                <MenuItem key={organization.id} value={organization.id}>
+                  {organization.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Button
+              type="submit"
+              disabled={!selectedOrganizationId}
+              variant="contained"
+              size="large"
+              sx={{
+                borderRadius: 999,
+                py: 1.3,
+                fontFamily: theme.accentFontFamily,
+                fontWeight: 700,
+              }}
+            >
+              Creer le produit
+            </Button>
+          </Box>
+        </Card>
+      </Box>
+
+      {loading && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
+          <CircularProgress size={20} />
+          <Typography>Chargement des donnees...</Typography>
+        </Paper>
+      )}
+
+      {error && <Alert severity="error">{error}</Alert>}
+
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 3,
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+        }}
+      >
+        <Card title="Organisations" theme={theme}>
+          {!loading && organizations.length === 0 && (
+            <Typography sx={{ color: theme.mutedTextColor }}>
+              Aucune organisation pour le moment.
+            </Typography>
+          )}
+          <List disablePadding>
+            {organizations.map((organization, index) => (
+              <Box key={organization.id}>
+                <ListItem disableGutters sx={{ py: 1.25 }}>
+                  <ListItemText
+                    primary={organization.name}
+                    secondary={organization.slug}
+                  />
+                  <Chip label="Organisation" variant="outlined" size="small" />
+                </ListItem>
+                {index < organizations.length - 1 && <Divider />}
+              </Box>
             ))}
-          </select>
-          <button
-            type="submit"
-            disabled={!selectedOrganizationId}
-            style={buttonStyle}
-          >
-            Creer le produit
-          </button>
-        </form>
-      </Card>
+          </List>
+        </Card>
 
-      {loading && <p>Chargement...</p>}
-      {error && <p style={{ color: 'crimson' }}>Erreur: {error}</p>}
+        <Card title="Produits" theme={theme}>
+          {!loading && products.length === 0 && (
+            <Typography sx={{ color: theme.mutedTextColor }}>
+              Aucun produit pour le moment.
+            </Typography>
+          )}
+          <List disablePadding>
+            {products.map((product, index) => {
+              const organization = product.organizationId
+                ? organizationsById.get(product.organizationId)
+                : undefined;
 
-      <Card title="Organisations" theme={theme}>
-        {!loading && organizations.length === 0 && (
-          <p>Aucune organisation pour le moment.</p>
-        )}
-        <ul>
-          {organizations.map((organization) => (
-            <li key={organization.id}>
-              {organization.name} ({organization.slug})
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card title="Produits" theme={theme}>
-        {!loading && products.length === 0 && (
-          <p>Aucun produit pour le moment.</p>
-        )}
-        <ul>
-          {products.map((product) => {
-            const organization = product.organizationId
-              ? organizationsById.get(product.organizationId)
-              : undefined;
-
-            return (
-              <li key={product.id}>
-                {product.name} - {product.price} {product.currency ?? currency}{' '}
-                {organization ? `(org: ${organization.name})` : ''}
-              </li>
-            );
-          })}
-        </ul>
-      </Card>
-    </>
+              return (
+                <Box key={product.id}>
+                  <ListItem disableGutters sx={{ py: 1.25 }}>
+                    <ListItemText
+                      primary={product.name}
+                      secondary={`${product.price} ${product.currency ?? currency}${
+                        organization ? ` · ${organization.name}` : ''
+                      }`}
+                    />
+                    <Chip
+                      label={product.inStock === false ? 'Rupture' : 'Actif'}
+                      color={product.inStock === false ? 'default' : 'primary'}
+                      size="small"
+                    />
+                  </ListItem>
+                  {index < products.length - 1 && <Divider />}
+                </Box>
+              );
+            })}
+          </List>
+        </Card>
+      </Box>
+    </Stack>
   );
 }
 
@@ -426,7 +515,7 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
 function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
   return (
     <Card title={title} theme={theme}>
-      <p style={{ margin: 0, color: theme.mutedTextColor }}>{details}</p>
+      <Typography sx={{ color: theme.mutedTextColor }}>{details}</Typography>
     </Card>
   );
 }
@@ -521,7 +610,6 @@ function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
  * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
  */
 export function App({ clientConfig, theme }: AppProps) {
-  const location = useLocation();
   const [auth, setAuth] = useState<AuthState>({
     status: 'loading',
     role: null,
@@ -650,7 +738,40 @@ export function App({ clientConfig, theme }: AppProps) {
     setOtpCode('');
   };
 
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const muiTheme = createTheme({
+    palette: {
+      mode: 'light',
+      primary: {
+        main: theme.accentColor,
+        contrastText: theme.accentContrastColor,
+      },
+      background: {
+        default: alpha(theme.accentColor, 0.06),
+        paper: theme.surface,
+      },
+      text: {
+        primary: theme.textColor,
+        secondary: theme.mutedTextColor,
+      },
+      divider: theme.borderColor,
+    },
+    shape: {
+      borderRadius: 18,
+    },
+    typography: {
+      fontFamily: theme.fontFamily,
+      h1: {
+        fontFamily: theme.accentFontFamily,
+        fontWeight: 800,
+      },
+      h5: {
+        fontFamily: theme.accentFontFamily,
+      },
+      button: {
+        textTransform: 'none',
+      },
+    },
+  });
 
   const signInNode = (
     <SignInCard
@@ -668,198 +789,256 @@ export function App({ clientConfig, theme }: AppProps) {
   );
 
   return (
-    <main
-      style={{
-        maxWidth: 860,
-        margin: '2rem auto',
-        padding: '0 1rem 3rem',
-        color: theme.textColor,
-        fontFamily: theme.fontFamily,
-      }}
-    >
-      <section
-        style={{
-          marginBottom: '1rem',
-          padding: '1.5rem',
-          borderRadius: 28,
-          background: theme.background,
-          border: `1px solid ${theme.borderColor}`,
-          boxShadow: '0 28px 60px rgba(0, 0, 0, 0.08)',
+    <ThemeProvider theme={muiTheme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          py: { xs: 3, md: 5 },
+          backgroundImage: `radial-gradient(circle at top left, ${alpha(
+            theme.accentColor,
+            0.22
+          )}, transparent 34%), ${theme.background}`,
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            fontFamily: theme.accentFontFamily,
-            fontSize: '0.85rem',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: theme.mutedTextColor,
-          }}
-        >
-          Boutique e-commerce single-tenant
-        </p>
-        <h1 style={{ margin: '0.4rem 0 0.35rem', fontSize: '2.4rem' }}>
-          Credo Storefront
-        </h1>
-        <p style={{ margin: 0, color: theme.mutedTextColor }}>
-          Meme contenu et meme logique metier, seule la palette change selon le
-          client.
-        </p>
-      </section>
-
-      <nav
-        style={{
-          display: 'flex',
-          gap: 12,
-          flexWrap: 'wrap',
-          marginBottom: '1rem',
-        }}
-      >
-        <Link to="/">/</Link>
-        <Link to="/c/featured">/c/:categorySlug</Link>
-        <Link to="/p/demo-product">/p/:productSlug</Link>
-        <Link to="/promo/summer">/promo/:promoSlug</Link>
-        <Link to="/cart">/cart</Link>
-        <Link to="/admin">/admin</Link>
-        <Link to="/admin/products">/admin/products</Link>
-      </nav>
-
-      <section style={{ marginBottom: '1rem', color: theme.mutedTextColor }}>
-        Auth: {auth.status}
-        {auth.status === 'signedIn' && (
-          <>
-            {' '}
-            · role={auth.role} · {auth.email}{' '}
-            <button
-              type="button"
-              onClick={handleSignOut}
-              style={{
-                marginLeft: 8,
-                border: `1px solid ${theme.borderColor}`,
-                background: theme.surface,
-                color: theme.textColor,
-                borderRadius: 999,
-                padding: '0.3rem 0.7rem',
-                cursor: 'pointer',
+        <Container maxWidth="lg">
+          <Stack spacing={3}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 3, md: 4 },
+                borderRadius: 5,
+                border: `1px solid ${alpha(theme.borderColor, 0.9)}`,
+                background: `linear-gradient(135deg, ${alpha(
+                  theme.accentColor,
+                  0.18
+                )} 0%, ${theme.background} 45%, ${theme.surface} 100%)`,
+                boxShadow: `0 30px 70px ${alpha(theme.textColor, 0.12)}`,
               }}
             >
-              Sign out
-            </button>
-          </>
-        )}
-      </section>
+              <Stack spacing={2}>
+                <Chip
+                  label="Boutique e-commerce single-tenant"
+                  sx={{
+                    alignSelf: 'flex-start',
+                    fontFamily: theme.accentFontFamily,
+                    letterSpacing: '0.04em',
+                    fontWeight: 700,
+                  }}
+                />
+                <Box>
+                  <Typography variant="h1" sx={{ fontSize: { xs: 36, md: 52 } }}>
+                    Credo Storefront
+                  </Typography>
+                  <Typography variant="h6" sx={{ color: theme.mutedTextColor }}>
+                    {clientConfig.brandName} · {clientConfig.brandTagline}
+                  </Typography>
+                </Box>
+                <Typography sx={{ maxWidth: 720, color: theme.mutedTextColor }}>
+                  Meme contenu et meme logique metier, seule la palette change
+                  selon le client. Les blocs ci-dessous sont volontairement nets
+                  pour mieux visualiser les zones fonctionnelles.
+                </Typography>
+              </Stack>
+            </Paper>
 
-      {isAdminRoute && auth.status === 'signedOut' ? signInNode : null}
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 4,
+                border: `1px solid ${theme.borderColor}`,
+                backgroundColor: alpha(theme.surface, 0.94),
+              }}
+            >
+              <Stack direction="row" spacing={1.25} flexWrap="wrap" useFlexGap>
+                <Button component={RouterLink} to="/" variant="outlined">
+                  /
+                </Button>
+                <Button component={RouterLink} to="/c/featured" variant="outlined">
+                  /c/:categorySlug
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/p/demo-product"
+                  variant="outlined"
+                >
+                  /p/:productSlug
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/promo/summer"
+                  variant="outlined"
+                >
+                  /promo/:promoSlug
+                </Button>
+                <Button component={RouterLink} to="/cart" variant="outlined">
+                  /cart
+                </Button>
+                <Button component={RouterLink} to="/admin" variant="contained">
+                  /admin
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/admin/products"
+                  variant="contained"
+                >
+                  /admin/products
+                </Button>
+              </Stack>
+            </Paper>
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <RoutePlaceholder
-              title="Home"
-              details="Route publique /"
-              theme={theme}
-            />
-          }
-        />
-        <Route
-          path="/c/:categorySlug"
-          element={<CategoryPage theme={theme} />}
-        />
-        <Route path="/p/:productSlug" element={<ProductPage theme={theme} />} />
-        <Route path="/promo/:promoSlug" element={<PromoPage theme={theme} />} />
-        <Route
-          path="/cart"
-          element={
-            <RoutePlaceholder
-              title="Panier"
-              details="Route publique /cart"
-              theme={theme}
-            />
-          }
-        />
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: 4,
+                border: `1px solid ${theme.borderColor}`,
+                backgroundColor: alpha(theme.surface, 0.96),
+              }}
+            >
+              <Stack
+                direction={{ xs: 'column', md: 'row' }}
+                spacing={1.5}
+                alignItems={{ xs: 'flex-start', md: 'center' }}
+                justifyContent="space-between"
+              >
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Chip label={`Auth: ${auth.status}`} color="default" />
+                  {auth.status === 'signedIn' && auth.role && (
+                    <Chip label={`Role: ${auth.role}`} color="primary" />
+                  )}
+                  {auth.status === 'signedIn' && auth.email && (
+                    <Chip label={auth.email} variant="outlined" />
+                  )}
+                </Stack>
+                {auth.status === 'signedIn' && (
+                  <Button onClick={handleSignOut} variant="outlined">
+                    Sign out
+                  </Button>
+                )}
+              </Stack>
+            </Paper>
 
-        <Route
-          path="/admin"
-          element={
-            <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-              <RoutePlaceholder
-                title="Admin"
-                details="Backoffice principal"
-                theme={theme}
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <RoutePlaceholder
+                    title="Home"
+                    details="Route publique /"
+                    theme={theme}
+                  />
+                }
               />
-            </AdminGuard>
-          }
-        />
-        <Route
-          path="/admin/products"
-          element={
-            <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-              <AdminCatalog theme={theme} currency={clientConfig.currency} />
-            </AdminGuard>
-          }
-        />
-        <Route
-          path="/admin/categories"
-          element={
-            <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-              <RoutePlaceholder
-                title="Admin Categories"
-                details="Gestion des categories"
-                theme={theme}
+              <Route
+                path="/c/:categorySlug"
+                element={<CategoryPage theme={theme} />}
               />
-            </AdminGuard>
-          }
-        />
-        <Route
-          path="/admin/promos"
-          element={
-            <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-              <RoutePlaceholder
-                title="Admin Promos"
-                details="Gestion des promotions"
-                theme={theme}
+              <Route
+                path="/p/:productSlug"
+                element={<ProductPage theme={theme} />}
               />
-            </AdminGuard>
-          }
-        />
-        <Route
-          path="/admin/newsletters"
-          element={
-            <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-              <RoutePlaceholder
-                title="Admin Newsletters"
-                details="Gestion newsletter"
-                theme={theme}
+              <Route
+                path="/promo/:promoSlug"
+                element={<PromoPage theme={theme} />}
               />
-            </AdminGuard>
-          }
-        />
+              <Route
+                path="/cart"
+                element={
+                  <RoutePlaceholder
+                    title="Panier"
+                    details="Route publique /cart"
+                    theme={theme}
+                  />
+                }
+              />
 
-        <Route
-          path="/api/stripe/webhook"
-          element={
-            <ServerRoutePage pathLabel="/api/stripe/webhook" theme={theme} />
-          }
-        />
-        <Route
-          path="/api/ai/*"
-          element={<ServerRoutePage pathLabel="/api/ai/*" theme={theme} />}
-        />
+              <Route
+                path="/admin"
+                element={
+                  <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
+                    <RoutePlaceholder
+                      title="Admin"
+                      details="Backoffice principal"
+                      theme={theme}
+                    />
+                  </AdminGuard>
+                }
+              />
+              <Route
+                path="/admin/products"
+                element={
+                  <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
+                    <AdminCatalog theme={theme} currency={clientConfig.currency} />
+                  </AdminGuard>
+                }
+              />
+              <Route
+                path="/admin/categories"
+                element={
+                  <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
+                    <RoutePlaceholder
+                      title="Admin Categories"
+                      details="Gestion des categories"
+                      theme={theme}
+                    />
+                  </AdminGuard>
+                }
+              />
+              <Route
+                path="/admin/promos"
+                element={
+                  <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
+                    <RoutePlaceholder
+                      title="Admin Promos"
+                      details="Gestion des promotions"
+                      theme={theme}
+                    />
+                  </AdminGuard>
+                }
+              />
+              <Route
+                path="/admin/newsletters"
+                element={
+                  <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
+                    <RoutePlaceholder
+                      title="Admin Newsletters"
+                      details="Gestion newsletter"
+                      theme={theme}
+                    />
+                  </AdminGuard>
+                }
+              />
 
-        <Route
-          path="*"
-          element={
-            <RoutePlaceholder
-              title="404"
-              details="Route inconnue"
-              theme={theme}
-            />
-          }
-        />
-      </Routes>
-    </main>
+              <Route
+                path="/api/stripe/webhook"
+                element={
+                  <ServerRoutePage
+                    pathLabel="/api/stripe/webhook"
+                    theme={theme}
+                  />
+                }
+              />
+              <Route
+                path="/api/ai/*"
+                element={<ServerRoutePage pathLabel="/api/ai/*" theme={theme} />}
+              />
+
+              <Route
+                path="*"
+                element={
+                  <RoutePlaceholder
+                    title="404"
+                    details="Route inconnue"
+                    theme={theme}
+                  />
+                }
+              />
+            </Routes>
+          </Stack>
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
 
