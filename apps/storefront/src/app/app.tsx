@@ -1,10 +1,5 @@
 import { type SubmitEvent, useEffect, useState } from 'react';
-import {
-  Link as RouterLink,
-  Route,
-  Routes,
-  useParams,
-} from 'react-router-dom';
+import { Link as RouterLink, Route, Routes } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -36,9 +31,9 @@ import type {
   RoutePlaceholderProps,
   ServerRoutePageProps,
   SignInCardProps,
-  ThemeOnlyProps,
 } from './app.types';
 import { getErrorMessage } from './app.utils';
+import { StorefrontPublicRoutes } from './storefront-public-routes';
 import { useStorefrontAuth } from './use-storefront-auth';
 
 /**
@@ -513,48 +508,6 @@ function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
 }
 
 /**
- * Placeholder pour la route publique de catégorie.
- */
-function CategoryPage({ theme }: ThemeOnlyProps) {
-  const params = useParams();
-  return (
-    <RoutePlaceholder
-      title="Categorie"
-      details={`Route publique /c/${params.categorySlug ?? ':categorySlug'}`}
-      theme={theme}
-    />
-  );
-}
-
-/**
- * Placeholder pour la route publique de produit.
- */
-function ProductPage({ theme }: ThemeOnlyProps) {
-  const params = useParams();
-  return (
-    <RoutePlaceholder
-      title="Produit"
-      details={`Route publique /p/${params.productSlug ?? ':productSlug'}`}
-      theme={theme}
-    />
-  );
-}
-
-/**
- * Placeholder pour la route publique de promotion.
- */
-function PromoPage({ theme }: ThemeOnlyProps) {
-  const params = useParams();
-  return (
-    <RoutePlaceholder
-      title="Promo"
-      details={`Route publique /promo/${params.promoSlug ?? ':promoSlug'}`}
-      theme={theme}
-    />
-  );
-}
-
-/**
  * Placeholder pour les routes API qui doivent vivre côté backend.
  */
 function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
@@ -798,37 +751,9 @@ export function App({ clientConfig, theme }: AppProps) {
             </Paper>
 
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <RoutePlaceholder
-                    title="Home"
-                    details="Route publique /"
-                    theme={theme}
-                  />
-                }
-              />
-              <Route
-                path="/c/:categorySlug"
-                element={<CategoryPage theme={theme} />}
-              />
-              <Route
-                path="/p/:productSlug"
-                element={<ProductPage theme={theme} />}
-              />
-              <Route
-                path="/promo/:promoSlug"
-                element={<PromoPage theme={theme} />}
-              />
-              <Route
-                path="/cart"
-                element={
-                  <RoutePlaceholder
-                    title="Panier"
-                    details="Route publique /cart"
-                    theme={theme}
-                  />
-                }
+              <StorefrontPublicRoutes
+                theme={theme}
+                PlaceholderComponent={RoutePlaceholder}
               />
 
               <Route
