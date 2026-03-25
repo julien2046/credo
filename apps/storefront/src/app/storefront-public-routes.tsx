@@ -2,6 +2,11 @@ import type { ComponentType } from 'react';
 import type { StorefrontTheme } from '@credo/shared';
 import { Route, useParams } from 'react-router-dom';
 import type { RoutePlaceholderProps } from './app.types';
+import {
+  getCategoryContentBySlug,
+  getProductContentBySlug,
+  getPromoContentBySlug,
+} from './storefront-content';
 
 type StorefrontPublicRoutesProps = {
   theme: StorefrontTheme;
@@ -18,11 +23,15 @@ type PublicPageProps = {
  */
 function CategoryPage({ theme, PlaceholderComponent }: PublicPageProps) {
   const params = useParams();
+  const category = getCategoryContentBySlug(params.categorySlug);
 
   return (
     <PlaceholderComponent
-      title="Categorie"
-      details={`Route publique /c/${params.categorySlug ?? ':categorySlug'}`}
+      title={category?.title ?? 'Categorie'}
+      details={
+        category?.summary ??
+        `Route publique /c/${params.categorySlug ?? ':categorySlug'}`
+      }
       theme={theme}
     />
   );
@@ -33,11 +42,15 @@ function CategoryPage({ theme, PlaceholderComponent }: PublicPageProps) {
  */
 function ProductPage({ theme, PlaceholderComponent }: PublicPageProps) {
   const params = useParams();
+  const product = getProductContentBySlug(params.productSlug);
 
   return (
     <PlaceholderComponent
-      title="Produit"
-      details={`Route publique /p/${params.productSlug ?? ':productSlug'}`}
+      title={product?.title ?? 'Produit'}
+      details={
+        product?.summary ??
+        `Route publique /p/${params.productSlug ?? ':productSlug'}`
+      }
       theme={theme}
     />
   );
@@ -48,11 +61,15 @@ function ProductPage({ theme, PlaceholderComponent }: PublicPageProps) {
  */
 function PromoPage({ theme, PlaceholderComponent }: PublicPageProps) {
   const params = useParams();
+  const promo = getPromoContentBySlug(params.promoSlug);
 
   return (
     <PlaceholderComponent
-      title="Promo"
-      details={`Route publique /promo/${params.promoSlug ?? ':promoSlug'}`}
+      title={promo?.title ?? 'Promo'}
+      details={
+        promo?.summary ??
+        `Route publique /promo/${params.promoSlug ?? ':promoSlug'}`
+      }
       theme={theme}
     />
   );
@@ -72,7 +89,7 @@ export function StorefrontPublicRoutes({
         element={
           <PlaceholderComponent
             title="Home"
-            details="Route publique /"
+            details="Page vitrine publique qui pourra etre prerenderisee pour le SEO."
             theme={theme}
           />
         }
@@ -109,7 +126,7 @@ export function StorefrontPublicRoutes({
         element={
           <PlaceholderComponent
             title="Panier"
-            details="Route publique /cart"
+            details="Panier public. A garder dynamique ou a prerenderiser selon le besoin."
             theme={theme}
           />
         }
