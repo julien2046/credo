@@ -46,12 +46,11 @@ import { useStorefrontAuth } from './use-storefront-auth';
 function Card({ title, theme, children }: CardProps) {
   return (
     <MuiCard
-      elevation={0}
+      variant="outlined"
       sx={{
-        borderRadius: 4,
-        border: `1px solid ${theme.borderColor}`,
-        backgroundColor: theme.surface,
-        boxShadow: `0 18px 40px ${alpha(theme.textColor, 0.08)}`,
+        borderRadius: 3,
+        borderColor: alpha(theme.accentColor, 0.12),
+        backgroundColor: alpha(theme.surface, 0.96),
       }}
     >
       <CardContent sx={{ p: 3 }}>
@@ -82,22 +81,21 @@ function MetricTile({
 }) {
   return (
     <Paper
-      elevation={0}
+      variant="outlined"
       sx={{
         p: 2.5,
         minHeight: 142,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        borderRadius: 4,
-        border: `1px solid ${alpha(theme.borderColor, 0.88)}`,
+        borderRadius: 3,
+        borderColor: alpha(theme.accentColor, 0.12),
         background: accent
-          ? `linear-gradient(160deg, ${alpha(
-              theme.accentColor,
-              0.22
-            )} 0%, ${theme.surface} 100%)`
+          ? `linear-gradient(160deg, ${alpha(theme.accentColor, 0.08)} 0%, ${alpha(
+              theme.surface,
+              0.98
+            )} 100%)`
           : alpha(theme.surface, 0.94),
-        boxShadow: `0 16px 36px ${alpha(theme.textColor, 0.08)}`,
       }}
     >
       <Typography
@@ -151,13 +149,12 @@ function NavigationGroup({
 }) {
   return (
     <Paper
-      elevation={0}
+      variant="outlined"
       sx={{
         p: 2.5,
-        borderRadius: 4,
-        border: `1px solid ${alpha(theme.borderColor, 0.92)}`,
+        borderRadius: 3,
+        borderColor: alpha(theme.accentColor, 0.12),
         backgroundColor: alpha(theme.surface, 0.95),
-        boxShadow: `0 14px 32px ${alpha(theme.textColor, 0.06)}`,
       }}
     >
       <Stack spacing={2}>
@@ -190,7 +187,6 @@ function NavigationGroup({
               size="large"
               sx={{
                 minWidth: 0,
-                borderRadius: 3,
                 px: 2,
                 py: 1.1,
                 fontFamily: theme.accentFontFamily,
@@ -239,7 +235,8 @@ function InsetPanel({
     <MuiCard
       variant="outlined"
       sx={{
-        borderRadius: 3.5,
+        borderRadius: 2.5,
+        borderColor: alpha(theme.accentColor, 0.12),
         backgroundColor:
           tint === 'accent'
             ? alpha(theme.accentColor, 0.05)
@@ -321,11 +318,11 @@ function AuthCard({
         </Stack>
 
         <Paper
-          elevation={0}
+          variant="outlined"
           sx={{
             p: 2.25,
-            borderRadius: 3.5,
-            border: `1px solid ${alpha(theme.borderColor, 0.92)}`,
+            borderRadius: 2.5,
+            borderColor: alpha(theme.accentColor, 0.12),
             backgroundColor: alpha(theme.accentColor, 0.08),
           }}
         >
@@ -348,7 +345,7 @@ function AuthCard({
         </Paper>
 
         {infoMessage && (
-          <Alert severity="info" sx={{ borderRadius: 3 }}>
+          <Alert severity="info" sx={{ borderRadius: 2 }}>
             {infoMessage}
           </Alert>
         )}
@@ -377,7 +374,6 @@ function AuthCard({
               variant="contained"
               size="large"
               sx={{
-                borderRadius: 999,
                 py: 1.3,
                 fontFamily: theme.accentFontFamily,
                 fontWeight: 700,
@@ -410,7 +406,6 @@ function AuthCard({
               variant="contained"
               size="large"
               sx={{
-                borderRadius: 999,
                 py: 1.3,
                 fontFamily: theme.accentFontFamily,
                 fontWeight: 700,
@@ -445,7 +440,6 @@ function AuthCard({
               variant="contained"
               size="large"
               sx={{
-                borderRadius: 999,
                 py: 1.3,
                 fontFamily: theme.accentFontFamily,
                 fontWeight: 700,
@@ -478,7 +472,6 @@ function AuthCard({
               variant="contained"
               size="large"
               sx={{
-                borderRadius: 999,
                 py: 1.3,
                 fontFamily: theme.accentFontFamily,
                 fontWeight: 700,
@@ -490,7 +483,7 @@ function AuthCard({
         ) : null}
 
         {error && (
-          <Alert severity="error" sx={{ borderRadius: 3 }}>
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
             {error}
           </Alert>
         )}
@@ -703,7 +696,6 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                     variant="contained"
                     size="large"
                     sx={{
-                      borderRadius: 999,
                       py: 1.3,
                       fontFamily: theme.accentFontFamily,
                       fontWeight: 700,
@@ -769,7 +761,6 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                     variant="contained"
                     size="large"
                     sx={{
-                      borderRadius: 999,
                       py: 1.3,
                       fontFamily: theme.accentFontFamily,
                       fontWeight: 700,
@@ -789,7 +780,7 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
           variant="outlined"
           sx={{
             p: 2,
-            borderRadius: 3,
+            borderRadius: 2.5,
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
@@ -819,11 +810,11 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
 
             {!loading && organizations.length === 0 && (
               <Paper
-                elevation={0}
+                variant="outlined"
                 sx={{
                   p: 2.5,
-                  borderRadius: 3.5,
-                  border: `1px dashed ${alpha(theme.borderColor, 0.9)}`,
+                  borderRadius: 2.5,
+                  border: `1px dashed ${alpha(theme.accentColor, 0.16)}`,
                   backgroundColor: alpha(theme.surface, 0.7),
                 }}
               >
@@ -836,11 +827,10 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
               {organizations.map((organization) => (
                 <Paper
                   key={organization.id}
-                  elevation={0}
                   variant="outlined"
                   sx={{
                     p: 2,
-                    borderRadius: 3,
+                    borderRadius: 2.5,
                     backgroundColor: alpha(theme.surface, 0.86),
                   }}
                 >
@@ -876,11 +866,11 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
 
             {!loading && products.length === 0 && (
               <Paper
-                elevation={0}
+                variant="outlined"
                 sx={{
                   p: 2.5,
-                  borderRadius: 3.5,
-                  border: `1px dashed ${alpha(theme.borderColor, 0.9)}`,
+                  borderRadius: 2.5,
+                  border: `1px dashed ${alpha(theme.accentColor, 0.16)}`,
                   backgroundColor: alpha(theme.surface, 0.7),
                 }}
               >
@@ -898,11 +888,10 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                 return (
                   <Paper
                     key={product.id}
-                    elevation={0}
                     variant="outlined"
                     sx={{
                       p: 2,
-                      borderRadius: 3,
+                      borderRadius: 2.5,
                       backgroundColor: alpha(theme.surface, 0.86),
                     }}
                   >
@@ -961,11 +950,11 @@ function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
         />
         <Typography sx={{ color: theme.mutedTextColor }}>{details}</Typography>
         <Paper
-          elevation={0}
+          variant="outlined"
           sx={{
             p: 2,
-            borderRadius: 3,
-            border: `1px dashed ${alpha(theme.borderColor, 0.9)}`,
+            borderRadius: 2.5,
+            border: `1px dashed ${alpha(theme.accentColor, 0.16)}`,
             backgroundColor: alpha(theme.accentColor, 0.06),
           }}
         >
@@ -987,7 +976,7 @@ function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
   return (
     <Card title="Route server reservee" theme={theme}>
       <Stack spacing={2}>
-        <Alert severity="warning" sx={{ borderRadius: 3 }}>
+        <Alert severity="warning" sx={{ borderRadius: 2 }}>
           {pathLabel} doit etre implemente cote backend, pas dans la SPA.
         </Alert>
         <Typography sx={{ color: theme.mutedTextColor }}>
@@ -1074,7 +1063,7 @@ export function App({ clientConfig, theme }: AppProps) {
       divider: theme.borderColor,
     },
     shape: {
-      borderRadius: 18,
+      borderRadius: 10,
     },
     typography: {
       fontFamily: theme.fontFamily,
@@ -1095,6 +1084,16 @@ export function App({ clientConfig, theme }: AppProps) {
           root: {
             backgroundImage: 'none',
           },
+          outlined: {
+            borderColor: alpha(theme.accentColor, 0.12),
+          },
+        },
+      },
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+          },
         },
       },
       MuiButton: {
@@ -1103,7 +1102,7 @@ export function App({ clientConfig, theme }: AppProps) {
         },
         styleOverrides: {
           root: {
-            borderRadius: 999,
+            borderRadius: 10,
             fontWeight: 700,
           },
           contained: {
@@ -1163,16 +1162,15 @@ export function App({ clientConfig, theme }: AppProps) {
         <Container maxWidth="lg">
           <Stack spacing={3}>
             <Paper
-              elevation={0}
+              variant="outlined"
               sx={{
                 p: { xs: 3, md: 4 },
-                borderRadius: 5,
-                border: `1px solid ${alpha(theme.borderColor, 0.9)}`,
+                borderRadius: 3.5,
+                borderColor: alpha(theme.accentColor, 0.16),
                 background: `linear-gradient(135deg, ${alpha(
                   theme.accentColor,
                   0.16
                 )} 0%, ${theme.background} 42%, ${theme.surface} 100%)`,
-                boxShadow: `0 30px 70px ${alpha(theme.textColor, 0.1)}`,
               }}
             >
               <Stack spacing={2}>
@@ -1414,57 +1412,6 @@ export function App({ clientConfig, theme }: AppProps) {
                 />
 
                 {!isAdminRoute && auth.status === 'signedOut' ? signInNode : null}
-
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gap: 2,
-                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
-                  }}
-                >
-                  <MetricTile
-                    label="Client"
-                    value={clientConfig.brandName}
-                    supportingText={clientConfig.styleGuide}
-                    theme={theme}
-                    accent
-                  />
-                  <MetricTile
-                    label="Canaux actifs"
-                    value={clientConfig.enabledChannels.length.toString()}
-                    supportingText={clientConfig.enabledChannels.join(' · ')}
-                    theme={theme}
-                  />
-                  <MetricTile
-                    label="Theme actif"
-                    value={theme.name}
-                    supportingText="La variation multi-client reste principalement visuelle."
-                    theme={theme}
-                  />
-                  <MetricTile
-                    label="Cible technique"
-                    value="SPA + prerender"
-                    supportingText="Pages publiques SEO plus tard, admin dynamique maintenant."
-                    theme={theme}
-                  />
-                </Box>
-
-                <Stack spacing={1.5}>
-                  {authInfoMessage ? (
-                    <Alert severity="info" sx={{ borderRadius: 3 }}>
-                      {authInfoMessage}
-                    </Alert>
-                  ) : null}
-                  {authError ? (
-                    <Alert severity="error" sx={{ borderRadius: 3 }}>
-                      {authError}
-                    </Alert>
-                  ) : null}
-                  <Alert severity="success" sx={{ borderRadius: 3 }}>
-                    Référence design reprise de `RUThereV2`: sections sobres,
-                    grille stable et lecture plus immédiate.
-                  </Alert>
-                </Stack>
               </Stack>
             </Box>
           </Stack>
