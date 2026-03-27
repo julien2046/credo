@@ -57,6 +57,7 @@ export type DataClient = {
 };
 
 let isConfigured = false;
+let dataClientInstance: DataClient | null = null;
 
 export function configureAmplify(config: AmplifyConfigInput) {
   if (isConfigured) return;
@@ -65,6 +66,15 @@ export function configureAmplify(config: AmplifyConfigInput) {
   isConfigured = true;
 }
 
-// Temporary manual typing to avoid `any` until we wire the full Amplify schema
-// type across workspace boundaries.
-export const dataClient = generateClient() as unknown as DataClient;
+/**
+ * Retourne un client Amplify Data initialise apres `Amplify.configure()`.
+ */
+export function getDataClient(): DataClient {
+  if (!dataClientInstance) {
+    // Temporary manual typing to avoid `any` until we wire the full Amplify
+    // schema type across workspace boundaries.
+    dataClientInstance = generateClient() as unknown as DataClient;
+  }
+
+  return dataClientInstance;
+}

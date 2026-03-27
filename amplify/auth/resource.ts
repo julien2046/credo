@@ -6,12 +6,13 @@ import { defineAuth } from '@aws-amplify/backend';
  */
 export const auth = defineAuth({
   loginWith: {
-    email: {
+    phone: {
       otpLogin: true,
     },
   },
   groups: ['MERCHANT', 'CUSTOMER'],
+  accountRecovery: 'PHONE_ONLY_WITHOUT_MFA',
   passwordlessOptions: {
-    preferredChallenge: 'EMAIL_OTP',
+    preferredChallenge: 'SMS_OTP',
   },
 });

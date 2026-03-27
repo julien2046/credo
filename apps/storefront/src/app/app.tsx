@@ -20,8 +20,9 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha, createTheme, ThemeProvider } from '@mui/material/styles';
-import { dataClient } from '@credo/platform-amplify';
+import { getDataClient } from '@credo/platform-amplify';
 import type {
+  AuthCardProps,
   AdminCatalogProps,
   AdminGuardProps,
   AppProps,
@@ -30,10 +31,9 @@ import type {
   Product,
   RoutePlaceholderProps,
   ServerRoutePageProps,
-  SignInCardProps,
 } from './app.types';
 import { getErrorMessage } from './app.utils';
-import { StorefrontPublicRoutes } from './storefront-public-routes';
+import { renderStorefrontPublicRoutes } from './storefront-public-routes';
 import { useStorefrontAuth } from './use-storefront-auth';
 
 /**
@@ -61,42 +61,79 @@ function Card({ title, theme, children }: CardProps) {
 }
 
 /**
- * Gère le flux de connexion OTP (demande et validation du code email).
+ * Gère les flux passwordless de creation de compte et de connexion par SMS.
  */
-function SignInCard({
+function AuthCard({
   theme,
+  authMode,
   otpStep,
-  email,
+  signUpStep,
+  phoneNumber,
   code,
   error,
+  infoMessage,
   loading,
-  onChangeEmail,
+  onChangePhoneNumber,
   onChangeCode,
-  onRequestCode,
-  onConfirmCode,
-}: SignInCardProps) {
+  onSwitchMode,
+  onRequestOtp,
+  onConfirmOtp,
+  onRequestSignUp,
+  onConfirmSignUp,
+}: AuthCardProps) {
+  const isSignIn = authMode === 'sign-in';
+  const isRequestOtp = isSignIn && otpStep === 'request-code';
+  const isConfirmOtp = isSignIn && otpStep === 'confirm-code';
+  const isRequestSignUp = authMode === 'sign-up' && signUpStep === 'collect-phone';
+  const isConfirmSignUp =
+    authMode === 'sign-up' && signUpStep === 'confirm-sign-up';
+
   return (
-    <Card title="Connexion admin (email OTP)" theme={theme}>
-      {otpStep === 'request-code' ? (
+    <Card title="Authentification passwordless" theme={theme}>
+      <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+        <Button
+          variant={isSignIn ? 'contained' : 'outlined'}
+          onClick={() => onSwitchMode('sign-in')}
+          disabled={loading}
+        >
+          Se connecter
+        </Button>
+        <Button
+          variant={authMode === 'sign-up' ? 'contained' : 'outlined'}
+          onClick={() => onSwitchMode('sign-up')}
+          disabled={loading}
+        >
+          Creer un compte
+        </Button>
+      </Stack>
+
+      {infoMessage && (
+        <Alert severity="info" sx={{ mb: 2, borderRadius: 3 }}>
+          {infoMessage}
+        </Alert>
+      )}
+
+      {isRequestOtp ? (
         <Box
           component="form"
-          onSubmit={onRequestCode}
+          onSubmit={onRequestOtp}
           sx={{ display: 'grid', gap: 2 }}
         >
           <TextField
-            id="email"
-            label="Email"
-            type="email"
+            id="phone-number-sign-in"
+            label="Numero de telephone"
+            type="tel"
             required
             fullWidth
-            value={email}
-            onChange={(event) => onChangeEmail(event.target.value)}
-            placeholder="you@shop.com"
+            value={phoneNumber}
+            onChange={(event) => onChangePhoneNumber(event.target.value)}
+            placeholder="+15145551234"
             variant="outlined"
+            helperText="Format recommande: +15145551234"
           />
           <Button
             type="submit"
-            disabled={loading || !email.trim()}
+            disabled={loading || !phoneNumber.trim()}
             variant="contained"
             size="large"
             sx={{
@@ -106,21 +143,20 @@ function SignInCard({
               fontWeight: 700,
             }}
           >
-            {loading ? 'Envoi...' : 'Envoyer un code'}
+            {loading ? 'Envoi...' : 'Recevoir un code SMS'}
           </Button>
         </Box>
-      ) : (
+      ) : null}
+
+      {isConfirmOtp ? (
         <Box
           component="form"
-          onSubmit={onConfirmCode}
+          onSubmit={onConfirmOtp}
           sx={{ display: 'grid', gap: 2 }}
         >
-          <Alert severity="info" sx={{ borderRadius: 3 }}>
-            Un code a ete envoye a <strong>{email}</strong>.
-          </Alert>
           <TextField
-            id="otp-code"
-            label="Code OTP"
+            id="sms-otp-code"
+            label="Code SMS"
             required
             fullWidth
             value={code}
@@ -140,10 +176,79 @@ function SignInCard({
               fontWeight: 700,
             }}
           >
-            {loading ? 'Validation...' : 'Valider le code'}
+            {loading ? 'Validation...' : 'Valider le code SMS'}
           </Button>
         </Box>
-      )}
+      ) : null}
+
+      {isRequestSignUp ? (
+        <Box
+          component="form"
+          onSubmit={onRequestSignUp}
+          sx={{ display: 'grid', gap: 2 }}
+        >
+          <TextField
+            id="phone-number-sign-up"
+            label="Numero de telephone"
+            type="tel"
+            required
+            fullWidth
+            value={phoneNumber}
+            onChange={(event) => onChangePhoneNumber(event.target.value)}
+            placeholder="+15145551234"
+            variant="outlined"
+            helperText="Le compte sera cree avec ce numero."
+          />
+          <Button
+            type="submit"
+            disabled={loading || !phoneNumber.trim()}
+            variant="contained"
+            size="large"
+            sx={{
+              borderRadius: 999,
+              py: 1.3,
+              fontFamily: theme.accentFontFamily,
+              fontWeight: 700,
+            }}
+          >
+            {loading ? 'Creation...' : 'Creer le compte'}
+          </Button>
+        </Box>
+      ) : null}
+
+      {isConfirmSignUp ? (
+        <Box
+          component="form"
+          onSubmit={onConfirmSignUp}
+          sx={{ display: 'grid', gap: 2 }}
+        >
+          <TextField
+            id="sign-up-code"
+            label="Code de confirmation"
+            required
+            fullWidth
+            value={code}
+            onChange={(event) => onChangeCode(event.target.value)}
+            placeholder="123456"
+            variant="outlined"
+          />
+          <Button
+            type="submit"
+            disabled={loading || !code.trim()}
+            variant="contained"
+            size="large"
+            sx={{
+              borderRadius: 999,
+              py: 1.3,
+              fontFamily: theme.accentFontFamily,
+              fontWeight: 700,
+            }}
+          >
+            {loading ? 'Confirmation...' : 'Confirmer le compte'}
+          </Button>
+        </Box>
+      ) : null}
+
       {error && (
         <Alert severity="error" sx={{ mt: 2, borderRadius: 3 }}>
           {error}
@@ -157,6 +262,7 @@ function SignInCard({
  * Backoffice produits/organisations avec listing et création via Amplify Data.
  */
 function AdminCatalog({ theme, currency }: AdminCatalogProps) {
+  const dataClient = getDataClient();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [organizationName, setOrganizationName] = useState('');
@@ -557,15 +663,21 @@ function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
 export function App({ clientConfig, theme }: AppProps) {
   const {
     auth,
+    authMode,
     otpStep,
-    email,
-    otpCode,
+    signUpStep,
+    phoneNumber,
+    authCode,
     authLoading,
     authError,
-    setEmail,
-    setOtpCode,
+    authInfoMessage,
+    setAuthMode,
+    setPhoneNumber,
+    setAuthCode,
     handleRequestOtp,
     handleConfirmOtp,
+    handleRequestSignUp,
+    handleConfirmSignUp,
     handleSignOut,
   } = useStorefrontAuth();
 
@@ -605,17 +717,23 @@ export function App({ clientConfig, theme }: AppProps) {
   });
 
   const signInNode = (
-    <SignInCard
+    <AuthCard
       theme={theme}
+      authMode={authMode}
       otpStep={otpStep}
-      email={email}
-      code={otpCode}
+      signUpStep={signUpStep}
+      phoneNumber={phoneNumber}
+      code={authCode}
       error={authError}
+      infoMessage={authInfoMessage}
       loading={authLoading}
-      onChangeEmail={setEmail}
-      onChangeCode={setOtpCode}
-      onRequestCode={handleRequestOtp}
-      onConfirmCode={handleConfirmOtp}
+      onChangePhoneNumber={setPhoneNumber}
+      onChangeCode={setAuthCode}
+      onSwitchMode={setAuthMode}
+      onRequestOtp={handleRequestOtp}
+      onConfirmOtp={handleConfirmOtp}
+      onRequestSignUp={handleRequestSignUp}
+      onConfirmSignUp={handleConfirmSignUp}
     />
   );
 
@@ -738,8 +856,8 @@ export function App({ clientConfig, theme }: AppProps) {
                   {auth.status === 'signedIn' && auth.role && (
                     <Chip label={`Role: ${auth.role}`} color="primary" />
                   )}
-                  {auth.status === 'signedIn' && auth.email && (
-                    <Chip label={auth.email} variant="outlined" />
+                  {auth.status === 'signedIn' && auth.identifier && (
+                    <Chip label={auth.identifier} variant="outlined" />
                   )}
                 </Stack>
                 {auth.status === 'signedIn' && (
@@ -751,10 +869,10 @@ export function App({ clientConfig, theme }: AppProps) {
             </Paper>
 
             <Routes>
-              <StorefrontPublicRoutes
-                theme={theme}
-                PlaceholderComponent={RoutePlaceholder}
-              />
+              {renderStorefrontPublicRoutes({
+                theme,
+                PlaceholderComponent: RoutePlaceholder,
+              })}
 
               <Route
                 path="/admin"

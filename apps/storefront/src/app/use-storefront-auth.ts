@@ -1,14 +1,18 @@
 import { type SubmitEvent, useEffect, useState } from 'react';
 import {
+  confirmSignUp,
   confirmSignIn,
   fetchAuthSession,
   getCurrentUser,
   signIn,
+  signUp,
   signOut,
 } from 'aws-amplify/auth';
 import type {
+  AuthMode,
   AuthState,
   OtpStep,
+  SignUpStep,
   StorefrontAuthHookResult,
 } from './app.types';
 import { resolveRoleFromSession } from './app.utils';
@@ -20,13 +24,35 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   const [auth, setAuth] = useState<AuthState>({
     status: 'loading',
     role: null,
-    email: null,
+    identifier: null,
   });
+  const [authMode, setAuthModeState] = useState<AuthMode>('sign-in');
   const [otpStep, setOtpStep] = useState<OtpStep>('request-code');
-  const [email, setEmail] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  const [signUpStep, setSignUpStep] = useState<SignUpStep>('collect-phone');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [authCode, setAuthCode] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authInfoMessage, setAuthInfoMessage] = useState<string | null>(null);
+
+  /**
+   * Remet a zero les etats de saisie transitoires.
+   */
+  const resetFlowState = () => {
+    setOtpStep('request-code');
+    setSignUpStep('collect-phone');
+    setAuthCode('');
+    setAuthError(null);
+    setAuthInfoMessage(null);
+  };
+
+  /**
+   * Bascule entre connexion et creation de compte.
+   */
+  const setAuthMode = (mode: AuthMode) => {
+    setAuthModeState(mode);
+    resetFlowState();
+  };
 
   /**
    * Recharge l'etat de session Cognito et deduit le role applicatif.
@@ -44,13 +70,13 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
       setAuth({
         status: 'signedIn',
         role,
-        email: user?.signInDetails?.loginId ?? user?.username ?? null,
+        identifier: user?.signInDetails?.loginId ?? user?.username ?? null,
       });
     } catch {
       setAuth({
         status: 'signedOut',
         role: null,
-        email: null,
+        identifier: null,
       });
     }
   };
@@ -65,14 +91,15 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   const handleRequestOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError(null);
+    setAuthInfoMessage(null);
     setAuthLoading(true);
 
     try {
       const result = await signIn({
-        username: email.trim(),
+        username: phoneNumber.trim(),
         options: {
           authFlowType: 'USER_AUTH',
-          preferredChallenge: 'EMAIL_OTP',
+          preferredChallenge: 'SMS_OTP',
         },
       });
 
@@ -83,8 +110,9 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
         return;
       }
 
-      if (step === 'CONFIRM_SIGN_IN_WITH_EMAIL_CODE') {
+      if (step === 'CONFIRM_SIGN_IN_WITH_SMS_CODE') {
         setOtpStep('confirm-code');
+        setAuthInfoMessage('Un code SMS a ete envoye a votre numero.');
         return;
       }
 
@@ -93,7 +121,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
       const message =
         err instanceof Error
           ? err.message
-          : 'Impossible de lancer la connexion OTP.';
+          : 'Impossible de lancer la connexion SMS OTP.';
       setAuthError(message);
     } finally {
       setAuthLoading(false);
@@ -106,11 +134,12 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   const handleConfirmOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError(null);
+    setAuthInfoMessage(null);
     setAuthLoading(true);
 
     try {
       const result = await confirmSignIn({
-        challengeResponse: otpCode.trim(),
+        challengeResponse: authCode.trim(),
       });
 
       if (result.nextStep.signInStep !== 'DONE') {
@@ -120,11 +149,97 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
         return;
       }
 
-      setOtpCode('');
-      setOtpStep('request-code');
+      resetFlowState();
       await refreshSession();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Code OTP invalide.';
+      setAuthError(message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  /**
+   * Cree un compte passwordless avec numero de telephone.
+   */
+  const handleRequestSignUp = async (event: SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAuthError(null);
+    setAuthInfoMessage(null);
+    setAuthLoading(true);
+
+    try {
+      const result = await signUp({
+        username: phoneNumber.trim(),
+        options: {
+          userAttributes: {
+            phone_number: phoneNumber.trim(),
+          },
+        },
+      });
+
+      if (result.nextStep.signUpStep === 'DONE') {
+        setAuthModeState('sign-in');
+        setAuthInfoMessage(
+          'Compte cree. Vous pouvez maintenant demander un code de connexion.'
+        );
+        return;
+      }
+
+      if (result.nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
+        setSignUpStep('confirm-sign-up');
+        setAuthInfoMessage('Confirmez votre compte avec le code SMS recu.');
+        return;
+      }
+
+      setAuthError(
+        `Etape de creation de compte non supportee: ${result.nextStep.signUpStep}`
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Impossible de creer le compte.';
+      setAuthError(message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  /**
+   * Confirme le compte cree avec le code SMS de verification.
+   */
+  const handleConfirmSignUp = async (
+    event: SubmitEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setAuthError(null);
+    setAuthInfoMessage(null);
+    setAuthLoading(true);
+
+    try {
+      const result = await confirmSignUp({
+        username: phoneNumber.trim(),
+        confirmationCode: authCode.trim(),
+      });
+
+      if (result.nextStep.signUpStep === 'DONE') {
+        setAuthModeState('sign-in');
+        resetFlowState();
+        setAuthInfoMessage(
+          'Compte confirme. Vous pouvez maintenant demander un code de connexion.'
+        );
+        return;
+      }
+
+      setAuthError(
+        `Etape de confirmation non supportee: ${result.nextStep.signUpStep}`
+      );
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Impossible de confirmer le compte.';
       setAuthError(message);
     } finally {
       setAuthLoading(false);
@@ -139,23 +254,28 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
     setAuth({
       status: 'signedOut',
       role: null,
-      email: null,
+      identifier: null,
     });
-    setOtpStep('request-code');
-    setOtpCode('');
+    resetFlowState();
   };
 
   return {
     auth,
+    authMode,
     otpStep,
-    email,
-    otpCode,
+    signUpStep,
+    phoneNumber,
+    authCode,
     authLoading,
     authError,
-    setEmail,
-    setOtpCode,
+    authInfoMessage,
+    setAuthMode,
+    setPhoneNumber,
+    setAuthCode,
     handleRequestOtp,
     handleConfirmOtp,
+    handleRequestSignUp,
+    handleConfirmSignUp,
     handleSignOut,
   };
 }

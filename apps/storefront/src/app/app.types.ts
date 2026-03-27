@@ -20,11 +20,13 @@ export type Product = {
 export type UserRole = 'MERCHANT' | 'CUSTOMER';
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 export type OtpStep = 'request-code' | 'confirm-code';
+export type AuthMode = 'sign-in' | 'sign-up';
+export type SignUpStep = 'collect-phone' | 'confirm-sign-up';
 
 export type AuthState = {
   status: AuthStatus;
   role: UserRole | null;
-  email: string | null;
+  identifier: string | null;
 };
 
 export type AppProps = {
@@ -38,17 +40,23 @@ export type CardProps = {
   children: ReactNode;
 };
 
-export type SignInCardProps = {
+export type AuthCardProps = {
   theme: StorefrontTheme;
+  authMode: AuthMode;
   otpStep: OtpStep;
-  email: string;
+  signUpStep: SignUpStep;
+  phoneNumber: string;
   code: string;
   error: string | null;
+  infoMessage: string | null;
   loading: boolean;
-  onChangeEmail: (value: string) => void;
+  onChangePhoneNumber: (value: string) => void;
   onChangeCode: (value: string) => void;
-  onRequestCode: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-  onConfirmCode: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  onSwitchMode: (mode: AuthMode) => void;
+  onRequestOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  onConfirmOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  onRequestSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  onConfirmSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
 };
 
 export type AdminCatalogProps = {
@@ -80,14 +88,22 @@ export type AdminGuardProps = {
 
 export type StorefrontAuthHookResult = {
   auth: AuthState;
+  authMode: AuthMode;
   otpStep: OtpStep;
-  email: string;
-  otpCode: string;
+  signUpStep: SignUpStep;
+  phoneNumber: string;
+  authCode: string;
   authLoading: boolean;
   authError: string | null;
-  setEmail: (value: string) => void;
-  setOtpCode: (value: string) => void;
+  authInfoMessage: string | null;
+  setAuthMode: (mode: AuthMode) => void;
+  setPhoneNumber: (value: string) => void;
+  setAuthCode: (value: string) => void;
   handleRequestOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
   handleConfirmOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  handleRequestSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
+  handleConfirmSignUp: (
+    event: SubmitEvent<HTMLFormElement>
+  ) => Promise<void>;
   handleSignOut: () => Promise<void>;
 };

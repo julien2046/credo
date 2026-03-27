@@ -76,9 +76,9 @@ function PromoPage({ theme, PlaceholderComponent }: PublicPageProps) {
 }
 
 /**
- * Regroupe les routes publiques pour preparer un futur prerender.
+ * Retourne les routes publiques injectables dans `<Routes>`.
  */
-export function StorefrontPublicRoutes({
+export function renderStorefrontPublicRoutes({
   theme,
   PlaceholderComponent,
 }: StorefrontPublicRoutesProps) {
