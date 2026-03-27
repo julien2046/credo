@@ -17,7 +17,6 @@ export type Product = {
   organizationId: string | null;
 };
 
-export type UserRole = 'MERCHANT' | 'CUSTOMER';
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 export type OtpStep = 'request-code' | 'confirm-code';
 export type AuthMode = 'sign-in' | 'sign-up';
@@ -25,7 +24,6 @@ export type SignUpStep = 'collect-phone' | 'confirm-sign-up';
 
 export type AuthState = {
   status: AuthStatus;
-  role: UserRole | null;
   identifier: string | null;
 };
 

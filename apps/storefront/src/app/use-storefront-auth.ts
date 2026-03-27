@@ -2,11 +2,11 @@ import { type SubmitEvent, useEffect, useState } from 'react';
 import {
   confirmSignUp,
   confirmSignIn,
-  fetchAuthSession,
   getCurrentUser,
   signIn,
   signUp,
   signOut,
+  type SignInOutput,
 } from 'aws-amplify/auth';
 import type {
   AuthMode,
@@ -15,7 +15,6 @@ import type {
   SignUpStep,
   StorefrontAuthHookResult,
 } from './app.types';
-import { resolveRoleFromSession } from './app.utils';
 
 /**
  * Centralise l'etat et les transitions du flux d'authentification storefront.
@@ -23,7 +22,6 @@ import { resolveRoleFromSession } from './app.utils';
 export function useStorefrontAuth(): StorefrontAuthHookResult {
   const [auth, setAuth] = useState<AuthState>({
     status: 'loading',
-    role: null,
     identifier: null,
   });
   const [authMode, setAuthModeState] = useState<AuthMode>('sign-in');
@@ -60,22 +58,14 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   const refreshSession = async () => {
     try {
       const user = await getCurrentUser();
-      const session = await fetchAuthSession();
-      const payload = (session.tokens?.idToken?.payload ?? {}) as Record<
-        string,
-        unknown
-      >;
-      const role = resolveRoleFromSession(payload);
 
       setAuth({
         status: 'signedIn',
-        role,
         identifier: user?.signInDetails?.loginId ?? user?.username ?? null,
       });
     } catch {
       setAuth({
         status: 'signedOut',
-        role: null,
         identifier: null,
       });
     }
@@ -86,7 +76,46 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   }, []);
 
   /**
-   * Demarre la connexion passwordless par email OTP.
+   * Gère les étapes Cognito du flow USER_AUTH pour fiabiliser le SMS OTP.
+   */
+  const handleNextSignInStep = async (nextStep: SignInOutput['nextStep']) => {
+    switch (nextStep.signInStep) {
+      case 'DONE':
+        await refreshSession();
+        return;
+      case 'CONFIRM_SIGN_IN_WITH_SMS_CODE':
+        setOtpStep('confirm-code');
+        setAuthInfoMessage('Un code SMS a ete envoye a votre numero.');
+        return;
+      case 'CONTINUE_SIGN_IN_WITH_FIRST_FACTOR_SELECTION': {
+        const availableChallenges = nextStep.availableChallenges ?? [];
+
+        if (!availableChallenges.includes('SMS_OTP')) {
+          const challengeList =
+            availableChallenges.length > 0
+              ? availableChallenges.join(', ')
+              : 'aucun';
+
+          setAuthError(
+            `SMS OTP n'est pas disponible pour ce compte. Challenges disponibles: ${challengeList}.`
+          );
+          return;
+        }
+
+        const selectionResult = await confirmSignIn({
+          challengeResponse: 'SMS_OTP',
+        });
+
+        await handleNextSignInStep(selectionResult.nextStep);
+        return;
+      }
+      default:
+        setAuthError(`Etape de connexion non supportee: ${nextStep.signInStep}`);
+    }
+  };
+
+  /**
+   * Demarre la connexion passwordless par SMS OTP.
    */
   const handleRequestOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -103,20 +132,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
         },
       });
 
-      const step = result.nextStep.signInStep;
-
-      if (step === 'DONE') {
-        await refreshSession();
-        return;
-      }
-
-      if (step === 'CONFIRM_SIGN_IN_WITH_SMS_CODE') {
-        setOtpStep('confirm-code');
-        setAuthInfoMessage('Un code SMS a ete envoye a votre numero.');
-        return;
-      }
-
-      setAuthError(`Etape de connexion non supportee: ${step}`);
+      await handleNextSignInStep(result.nextStep);
     } catch (err) {
       const message =
         err instanceof Error
@@ -142,15 +158,8 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
         challengeResponse: authCode.trim(),
       });
 
-      if (result.nextStep.signInStep !== 'DONE') {
-        setAuthError(
-          `Etape de connexion non finalisee: ${result.nextStep.signInStep}`
-        );
-        return;
-      }
-
       resetFlowState();
-      await refreshSession();
+      await handleNextSignInStep(result.nextStep);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Code OTP invalide.';
       setAuthError(message);
@@ -253,7 +262,6 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
     await signOut();
     setAuth({
       status: 'signedOut',
-      role: null,
       identifier: null,
     });
     resetFlowState();

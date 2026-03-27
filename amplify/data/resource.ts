@@ -7,7 +7,7 @@ const schema = a.schema({
       slug: a.string().required(),
       products: a.hasMany('Product', 'organizationId'),
     })
-    .authorization((allow) => [allow.guest()]),
+    .authorization((allow) => [allow.authenticated()]),
 
   Product: a
     .model({
@@ -20,7 +20,7 @@ const schema = a.schema({
       organizationId: a.id().required(),
       organization: a.belongsTo('Organization', 'organizationId'),
     })
-    .authorization((allow) => [allow.guest()]),
+    .authorization((allow) => [allow.authenticated()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -28,6 +28,6 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: 'identityPool',
+    defaultAuthorizationMode: 'userPool',
   },
 });

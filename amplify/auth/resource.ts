@@ -10,7 +10,6 @@ export const auth = defineAuth({
       otpLogin: true,
     },
   },
-  groups: ['MERCHANT', 'CUSTOMER'],
   accountRecovery: 'PHONE_ONLY_WITHOUT_MFA',
   passwordlessOptions: {
     preferredChallenge: 'SMS_OTP',

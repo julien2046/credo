@@ -24,15 +24,6 @@ vi.mock('aws-amplify/auth', () => ({
     username: 'merchant@example.com',
     signInDetails: { loginId: 'merchant@example.com' },
   }),
-  fetchAuthSession: vi.fn().mockResolvedValue({
-    tokens: {
-      idToken: {
-        payload: {
-          'cognito:groups': ['MERCHANT'],
-        },
-      },
-    },
-  }),
   signIn: vi.fn(),
   confirmSignIn: vi.fn(),
   signOut: vi.fn().mockResolvedValue(undefined),
@@ -55,7 +46,7 @@ describe('App', () => {
     expect(screen.getByText(/route publique \//i)).toBeTruthy();
   });
 
-  it('should render protected admin products route for merchant', async () => {
+  it('should render protected admin products route for authenticated user', async () => {
     render(
       <MemoryRouter initialEntries={['/admin/products']}>
         <App clientConfig={clientConfigClientA} theme={clientATheme} />
@@ -63,7 +54,7 @@ describe('App', () => {
     );
 
     await screen.findByRole('heading', {
-      name: /catalogue amplify/i,
+      name: /catalogue admin/i,
     });
 
     expect(

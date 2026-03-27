@@ -989,7 +989,7 @@ function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
 }
 
 /**
- * Protège les routes admin selon l'état de session et le rôle MERCHANT.
+ * Protège les routes admin selon l'état de session.
  */
 function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
   if (auth.status === 'loading') {
@@ -1004,16 +1004,6 @@ function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
 
   if (auth.status === 'signedOut') {
     return signInNode;
-  }
-
-  if (auth.role !== 'MERCHANT') {
-    return (
-      <RoutePlaceholder
-        title="Acces refuse"
-        details="Le role MERCHANT est requis pour /admin/*."
-        theme={theme}
-      />
-    );
   }
 
   return children;
@@ -1256,11 +1246,11 @@ export function App({ clientConfig, theme }: AppProps) {
                       }}
                     >
                       <MetricTile
-                        label="Role"
-                        value={auth.role ?? 'Invité'}
-                        supportingText="MERCHANT requis pour toutes les routes /admin/*."
+                        label="Acces admin"
+                        value={auth.status === 'signedIn' ? 'Actif' : 'Bloque'}
+                        supportingText="Dans ce mode basique, toute session ouverte peut acceder au backoffice."
                         theme={theme}
-                        accent={auth.role === 'MERCHANT'}
+                        accent={auth.status === 'signedIn'}
                       />
                       <MetricTile
                         label="Identifiant"
@@ -1278,8 +1268,8 @@ export function App({ clientConfig, theme }: AppProps) {
                         alignItems={{ xs: 'flex-start', sm: 'center' }}
                       >
                         <Typography sx={{ color: theme.mutedTextColor }}>
-                          Session ouverte. Les routes admin restent protégées par
-                          le rôle `MERCHANT`.
+                          Session ouverte. Les routes admin sont accessibles tant
+                          que l'utilisateur est authentifié.
                         </Typography>
                         <Button onClick={handleSignOut} variant="outlined">
                           Sign out
