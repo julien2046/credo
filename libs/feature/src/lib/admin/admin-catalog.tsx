@@ -15,25 +15,10 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import type { Organization, Product } from '@credo/data-access';
 import { getErrorMessage, type StorefrontTheme } from '@credo/shared';
 import { getDataClient } from '@credo/platform-amplify';
 import { InsetPanel, SectionLead, StorefrontCard } from '@credo/ui';
-
-type Organization = {
-  id: string;
-  name: string | null;
-  slug: string | null;
-};
-
-type Product = {
-  id: string;
-  name: string | null;
-  description: string | null;
-  price: number | null;
-  currency: string | null;
-  inStock: boolean | null;
-  organizationId: string | null;
-};
 
 type ProductFormValues = {
   name: string;
