@@ -5,6 +5,7 @@ import {
   Routes,
   useLocation,
 } from 'react-router-dom';
+import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
   Box,
@@ -33,6 +34,7 @@ import type {
   CardProps,
   Organization,
   Product,
+  ProductFormValues,
   RoutePlaceholderProps,
   ServerRoutePageProps,
 } from './app.types';
@@ -501,12 +503,26 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [organizationName, setOrganizationName] = useState('');
   const [organizationSlug, setOrganizationSlug] = useState('');
-  const [productName, setProductName] = useState('');
-  const [productDescription, setProductDescription] = useState('');
-  const [productPrice, setProductPrice] = useState('');
-  const [selectedOrganizationId, setSelectedOrganizationId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const {
+    control,
+    formState: { errors: productFormErrors, isSubmitting: isProductSubmitting },
+    getValues,
+    handleSubmit,
+    register,
+    reset,
+    setValue,
+    watch,
+  } = useForm<ProductFormValues>({
+    defaultValues: {
+      name: '',
+      description: '',
+      price: '',
+      organizationId: '',
+    },
+  });
+  const selectedOrganizationId = watch('organizationId');
 
   /**
    * Charge les organisations/produits et maintient la sélection courante valide.
@@ -537,15 +553,18 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
 
     setOrganizations(nextOrganizations);
     setProducts(nextProducts);
-    setSelectedOrganizationId((current) => {
-      if (
-        current &&
-        nextOrganizations.some((organization) => organization.id === current)
-      ) {
-        return current;
-      }
+    const currentOrganizationId = getValues('organizationId');
+    const nextOrganizationId =
+      currentOrganizationId &&
+      nextOrganizations.some(
+        (organization) => organization.id === currentOrganizationId
+      )
+        ? currentOrganizationId
+        : (nextOrganizations[0]?.id ?? '');
 
-      return nextOrganizations[0]?.id ?? '';
+    setValue('organizationId', nextOrganizationId, {
+      shouldDirty: false,
+      shouldValidate: false,
     });
   };
 
@@ -602,14 +621,12 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   /**
    * Crée un produit rattaché à l'organisation sélectionnée.
    */
-  const handleProductSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleProductSubmit = async (values: ProductFormValues) => {
+    const name = values.name.trim();
+    const description = values.description.trim();
+    const price = Number(values.price);
 
-    const name = productName.trim();
-    const description = productDescription.trim();
-    const price = Number(productPrice);
-
-    if (!name || !selectedOrganizationId || Number.isNaN(price)) return;
+    if (!name || !values.organizationId || Number.isNaN(price)) return;
 
     setError(null);
 
@@ -618,7 +635,7 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
         name,
         price,
         currency,
-        organizationId: selectedOrganizationId,
+        organizationId: values.organizationId,
         ...(description ? { description } : {}),
       });
       const message = getErrorMessage(result?.errors);
@@ -628,9 +645,12 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
         return;
       }
 
-      setProductName('');
-      setProductDescription('');
-      setProductPrice('');
+      reset({
+        name: '',
+        description: '',
+        price: '',
+        organizationId: values.organizationId,
+      });
       await loadData();
     } catch (err) {
       const message =
@@ -715,19 +735,21 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                 />
                 <Box
                   component="form"
-                  onSubmit={handleProductSubmit}
+                  onSubmit={handleSubmit(handleProductSubmit)}
                   sx={{ display: 'grid', gap: 2 }}
                 >
                   <TextField
                     label="Nom du produit"
-                    value={productName}
-                    onChange={(event) => setProductName(event.target.value)}
+                    {...register('name', {
+                      required: 'Le nom du produit est requis.',
+                    })}
+                    error={Boolean(productFormErrors.name)}
+                    helperText={productFormErrors.name?.message}
                     fullWidth
                   />
                   <TextField
                     label="Description"
-                    value={productDescription}
-                    onChange={(event) => setProductDescription(event.target.value)}
+                    {...register('description')}
                     multiline
                     minRows={3}
                     fullWidth
@@ -736,28 +758,62 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                     label="Prix"
                     type="number"
                     inputProps={{ min: 0, step: 0.01 }}
-                    value={productPrice}
-                    onChange={(event) => setProductPrice(event.target.value)}
+                    {...register('price', {
+                      required: 'Le prix est requis.',
+                      validate: (value) => {
+                        const numericPrice = Number(value);
+
+                        if (Number.isNaN(numericPrice)) {
+                          return 'Le prix doit etre un nombre.';
+                        }
+
+                        if (numericPrice < 0) {
+                          return 'Le prix doit etre positif.';
+                        }
+
+                        return true;
+                      },
+                    })}
+                    error={Boolean(productFormErrors.price)}
+                    helperText={productFormErrors.price?.message}
                     fullWidth
                   />
-                  <TextField
-                    select
-                    label="Organisation"
-                    value={selectedOrganizationId}
-                    onChange={(event) => setSelectedOrganizationId(event.target.value)}
-                    helperText="Le produit sera rattache a cette organisation."
-                    fullWidth
-                  >
-                    <MenuItem value="">Choisir une organisation</MenuItem>
-                    {organizations.map((organization) => (
-                      <MenuItem key={organization.id} value={organization.id}>
-                        {organization.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  <Controller
+                    name="organizationId"
+                    control={control}
+                    rules={{
+                      required: 'Choisis une organisation.',
+                    }}
+                    render={({ field }) => (
+                      <TextField
+                        select
+                        label="Organisation"
+                        helperText={
+                          productFormErrors.organizationId?.message ??
+                          (organizations.length === 0
+                            ? "Cree d'abord une organisation."
+                            : 'Le produit sera rattache a cette organisation.')
+                        }
+                        error={Boolean(productFormErrors.organizationId)}
+                        fullWidth
+                        {...field}
+                      >
+                        <MenuItem value="">Choisir une organisation</MenuItem>
+                        {organizations.map((organization) => (
+                          <MenuItem key={organization.id} value={organization.id}>
+                            {organization.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+                  />
                   <Button
                     type="submit"
-                    disabled={!selectedOrganizationId}
+                    disabled={
+                      isProductSubmitting ||
+                      !selectedOrganizationId ||
+                      organizations.length === 0
+                    }
                     variant="contained"
                     size="large"
                     sx={{
@@ -766,7 +822,7 @@ function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                       fontWeight: 700,
                     }}
                   >
-                    Creer le produit
+                    {isProductSubmitting ? 'Creation...' : 'Creer le produit'}
                   </Button>
                 </Box>
               </Stack>

@@ -17,6 +17,13 @@ export type Product = {
   organizationId: string | null;
 };
 
+export type ProductFormValues = {
+  name: string;
+  description: string;
+  price: string;
+  organizationId: string;
+};
+
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 export type OtpStep = 'request-code' | 'confirm-code';
 export type AuthMode = 'sign-in' | 'sign-up';
