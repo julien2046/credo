@@ -43,7 +43,7 @@ const promos: StorefrontPromoContent[] = [
 ];
 
 /**
- * Retourne une categorie publique par slug.
+ * Retourne une catégorie publique par slug.
  */
 export function getCategoryContentBySlug(
   slug: string | undefined

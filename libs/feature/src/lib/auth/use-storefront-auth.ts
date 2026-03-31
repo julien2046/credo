@@ -14,10 +14,10 @@ import type {
   OtpStep,
   SignUpStep,
   StorefrontAuthHookResult,
-} from './app.types';
+} from './auth.types';
 
 /**
- * Centralise l'etat et les transitions du flux d'authentification storefront.
+ * Centralise l'état et les transitions du flux d'authentification storefront.
  */
 export function useStorefrontAuth(): StorefrontAuthHookResult {
   const [auth, setAuth] = useState<AuthState>({
@@ -34,7 +34,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   const [authInfoMessage, setAuthInfoMessage] = useState<string | null>(null);
 
   /**
-   * Remet a zero les etats de saisie transitoires.
+   * Remet à zéro les états de saisie transitoires.
    */
   const resetFlowState = () => {
     setOtpStep('request-code');
@@ -45,7 +45,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   };
 
   /**
-   * Bascule entre connexion et creation de compte.
+   * Bascule entre connexion et création de compte.
    */
   const setAuthMode = (mode: AuthMode) => {
     setAuthModeState(mode);
@@ -53,7 +53,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   };
 
   /**
-   * Recharge l'etat de session Cognito et deduit le role applicatif.
+   * Recharge l'état de session Cognito.
    */
   const refreshSession = async () => {
     try {
@@ -115,7 +115,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   };
 
   /**
-   * Demarre la connexion passwordless par SMS OTP.
+   * Démarre la connexion passwordless par SMS OTP.
    */
   const handleRequestOtp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -169,7 +169,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   };
 
   /**
-   * Cree un compte passwordless avec numero de telephone.
+   * Crée un compte passwordless avec numéro de téléphone.
    */
   const handleRequestSignUp = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -216,7 +216,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   };
 
   /**
-   * Confirme le compte cree avec le code SMS de verification.
+   * Confirme le compte créé avec le code SMS de vérification.
    */
   const handleConfirmSignUp = async (
     event: SubmitEvent<HTMLFormElement>
@@ -256,15 +256,18 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   };
 
   /**
-   * Termine la session utilisateur et reinitialise l'etat local d'auth.
+   * Termine la session utilisateur et réinitialise l'état local d'auth.
    */
   const handleSignOut = async () => {
+    setAuthError(null);
+    setAuthInfoMessage(null);
+
     await signOut();
+    resetFlowState();
     setAuth({
       status: 'signedOut',
       identifier: null,
     });
-    resetFlowState();
   };
 
   return {

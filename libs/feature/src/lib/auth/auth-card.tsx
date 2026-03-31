@@ -1,4 +1,3 @@
-import type { SubmitEvent } from 'react';
 import {
   Box,
   Button,
@@ -9,31 +8,8 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import type { StorefrontTheme } from '@credo/shared';
 import { StorefrontCard } from '@credo/ui';
-
-type AuthMode = 'sign-in' | 'sign-up';
-type OtpStep = 'request-code' | 'confirm-code';
-type SignUpStep = 'collect-phone' | 'confirm-sign-up';
-
-export type AuthCardProps = {
-  theme: StorefrontTheme;
-  authMode: AuthMode;
-  otpStep: OtpStep;
-  signUpStep: SignUpStep;
-  phoneNumber: string;
-  code: string;
-  error: string | null;
-  infoMessage: string | null;
-  loading: boolean;
-  onChangePhoneNumber: (value: string) => void;
-  onChangeCode: (value: string) => void;
-  onSwitchMode: (mode: AuthMode) => void;
-  onRequestOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-  onConfirmOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-  onRequestSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-  onConfirmSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-};
+import type { AuthCardProps } from './auth.types';
 
 /**
  * Gère les flux passwordless de création de compte et de connexion par SMS.

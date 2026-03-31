@@ -1,12 +1,5 @@
 import type { ReactNode, SubmitEvent } from 'react';
-import type { StorefrontClientConfig, StorefrontTheme } from '@credo/shared';
-
-export type ProductFormValues = {
-  name: string;
-  description: string;
-  price: string;
-  organizationId: string;
-};
+import type { StorefrontTheme } from '@credo/shared';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 export type OtpStep = 'request-code' | 'confirm-code';
@@ -16,17 +9,6 @@ export type SignUpStep = 'collect-phone' | 'confirm-sign-up';
 export type AuthState = {
   status: AuthStatus;
   identifier: string | null;
-};
-
-export type AppProps = {
-  clientConfig: StorefrontClientConfig;
-  theme: StorefrontTheme;
-};
-
-export type CardProps = {
-  title: string;
-  theme: StorefrontTheme;
-  children: ReactNode;
 };
 
 export type AuthCardProps = {
@@ -46,33 +28,6 @@ export type AuthCardProps = {
   onConfirmOtp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
   onRequestSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
   onConfirmSignUp: (event: SubmitEvent<HTMLFormElement>) => Promise<void>;
-};
-
-export type AdminCatalogProps = {
-  theme: StorefrontTheme;
-  currency: string;
-};
-
-export type RoutePlaceholderProps = {
-  title: string;
-  details: string;
-  theme: StorefrontTheme;
-};
-
-export type ThemeOnlyProps = {
-  theme: StorefrontTheme;
-};
-
-export type ServerRoutePageProps = {
-  pathLabel: string;
-  theme: StorefrontTheme;
-};
-
-export type AdminGuardProps = {
-  auth: AuthState;
-  theme: StorefrontTheme;
-  children: ReactNode;
-  signInNode: ReactNode;
 };
 
 export type StorefrontAuthHookResult = {
@@ -95,4 +50,11 @@ export type StorefrontAuthHookResult = {
     event: SubmitEvent<HTMLFormElement>
   ) => Promise<void>;
   handleSignOut: () => Promise<void>;
+};
+
+export type AdminGuardProps = {
+  auth: AuthState;
+  theme: StorefrontTheme;
+  children: ReactNode;
+  signInNode: ReactNode;
 };

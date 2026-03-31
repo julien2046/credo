@@ -1,10 +1,8 @@
 import {
-  Route,
   Routes,
   useLocation,
 } from 'react-router-dom';
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -15,98 +13,27 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha, createTheme, ThemeProvider } from '@mui/material/styles';
-import { AdminCatalog, AuthCard } from '@credo/feature';
-import {
-  MetricTile,
-  NavigationGroup,
-  StorefrontCard,
-} from '@credo/ui';
 import type {
-  AdminGuardProps,
-  AppProps,
-  RoutePlaceholderProps,
-  ServerRoutePageProps,
-} from './app.types';
-import { renderStorefrontPublicRoutes } from './storefront-public-routes';
-import { useStorefrontAuth } from './use-storefront-auth';
-
-/**
- * Affiche une page placeholder simple pour les routes non implémentées.
- */
-function RoutePlaceholder({ title, details, theme }: RoutePlaceholderProps) {
-  return (
-    <StorefrontCard title={title} theme={theme}>
-      <Stack spacing={2}>
-        <Chip
-          label="Zone fonctionnelle"
-          variant="outlined"
-          sx={{ alignSelf: 'flex-start' }}
-        />
-        <Typography sx={{ color: theme.mutedTextColor }}>{details}</Typography>
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 2,
-            borderRadius: 2.5,
-            border: `1px dashed ${alpha(theme.accentColor, 0.16)}`,
-            backgroundColor: alpha(theme.accentColor, 0.06),
-          }}
-        >
-          <Typography sx={{ color: theme.mutedTextColor }}>
-            La structure de page est en place. La prochaine étape consiste à
-            brancher le vrai contenu métier et, pour les routes publiques, le
-            futur prerender SEO.
-          </Typography>
-        </Paper>
-      </Stack>
-    </StorefrontCard>
-  );
-}
-
-/**
- * Placeholder pour les routes API qui doivent vivre côté backend.
- */
-function ServerRoutePage({ pathLabel, theme }: ServerRoutePageProps) {
-  return (
-    <StorefrontCard title="Route server reservee" theme={theme}>
-      <Stack spacing={2}>
-        <Alert severity="warning" sx={{ borderRadius: 2 }}>
-          {pathLabel} doit etre implemente cote backend, pas dans la SPA.
-        </Alert>
-        <Typography sx={{ color: theme.mutedTextColor }}>
-          Garde ici uniquement une explication visuelle. La logique réelle doit
-          vivre dans une function, une API ou un webhook.
-        </Typography>
-      </Stack>
-    </StorefrontCard>
-  );
-}
-
-/**
- * Protège les routes admin selon l'état de session.
- */
-function AdminGuard({ auth, theme, children, signInNode }: AdminGuardProps) {
-  if (auth.status === 'loading') {
-    return (
-      <RoutePlaceholder
-        title="Authentification"
-        details="Verification de la session..."
-        theme={theme}
-      />
-    );
-  }
-
-  if (auth.status === 'signedOut') {
-    return signInNode;
-  }
-
-  return children;
-}
+  StorefrontClientConfig,
+  StorefrontTheme,
+} from '@credo/shared';
+import {
+  AuthCard,
+  renderStorefrontRoutes,
+  useStorefrontAuth,
+} from '@credo/feature';
+import { MetricTile, NavigationGroup, StorefrontCard } from '@credo/ui';
 
 /**
  * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
  */
-export function App({ clientConfig, theme }: AppProps) {
+export function App({
+  clientConfig,
+  theme,
+}: {
+  clientConfig: StorefrontClientConfig;
+  theme: StorefrontTheme;
+}) {
   const location = useLocation();
   const {
     auth,
@@ -379,92 +306,12 @@ export function App({ clientConfig, theme }: AppProps) {
                 </StorefrontCard>
 
                 <Routes>
-                  {renderStorefrontPublicRoutes({
+                  {renderStorefrontRoutes({
+                    auth,
+                    currency: clientConfig.currency,
+                    signInNode,
                     theme,
-                    PlaceholderComponent: RoutePlaceholder,
                   })}
-
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-                        <RoutePlaceholder
-                          title="Admin"
-                          details="Backoffice principal"
-                          theme={theme}
-                        />
-                      </AdminGuard>
-                    }
-                  />
-                  <Route
-                    path="/admin/products"
-                    element={
-                      <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-                        <AdminCatalog theme={theme} currency={clientConfig.currency} />
-                      </AdminGuard>
-                    }
-                  />
-                  <Route
-                    path="/admin/categories"
-                    element={
-                      <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-                        <RoutePlaceholder
-                          title="Admin Categories"
-                          details="Gestion des categories"
-                          theme={theme}
-                        />
-                      </AdminGuard>
-                    }
-                  />
-                  <Route
-                    path="/admin/promos"
-                    element={
-                      <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-                        <RoutePlaceholder
-                          title="Admin Promos"
-                          details="Gestion des promotions"
-                          theme={theme}
-                        />
-                      </AdminGuard>
-                    }
-                  />
-                  <Route
-                    path="/admin/newsletters"
-                    element={
-                      <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-                        <RoutePlaceholder
-                          title="Admin Newsletters"
-                          details="Gestion newsletter"
-                          theme={theme}
-                        />
-                      </AdminGuard>
-                    }
-                  />
-
-                  <Route
-                    path="/api/stripe/webhook"
-                    element={
-                      <ServerRoutePage
-                        pathLabel="/api/stripe/webhook"
-                        theme={theme}
-                      />
-                    }
-                  />
-                  <Route
-                    path="/api/ai/*"
-                    element={<ServerRoutePage pathLabel="/api/ai/*" theme={theme} />}
-                  />
-
-                  <Route
-                    path="*"
-                    element={
-                      <RoutePlaceholder
-                        title="404"
-                        details="Route inconnue"
-                        theme={theme}
-                      />
-                    }
-                  />
                 </Routes>
               </Stack>
 
