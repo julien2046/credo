@@ -2,7 +2,6 @@ export * from './lib/admin/admin-catalog';
 export * from './lib/auth/auth-card';
 export * from './lib/auth/auth.types';
 export * from './lib/auth/use-storefront-auth';
-export * from './lib/feature';
 export * from './lib/routing/admin-guard';
 export * from './lib/routing/route-placeholder';
 export * from './lib/routing/server-route-page';
