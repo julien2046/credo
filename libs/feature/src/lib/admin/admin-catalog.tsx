@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -65,7 +65,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   /**
    * Charge les organisations/produits et maintient la sélection courante valide.
    */
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setError(null);
 
     const [orgResult, productResult] = await Promise.all([
@@ -99,13 +99,18 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
         (organization) => organization.id === currentOrganizationId
       )
         ? currentOrganizationId
-        : (nextOrganizations[0]?.id ?? '');
+        : nextOrganizations[0]?.id ?? '';
 
     setValue('organizationId', nextOrganizationId, {
       shouldDirty: false,
       shouldValidate: false,
     });
-  };
+  }, [
+    dataClient.models.Organization,
+    dataClient.models.Product,
+    getValues,
+    setValue,
+  ]);
 
   useEffect(() => {
     void (async () => {
@@ -119,7 +124,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [loadData]);
 
   /**
    * Crée une organisation puis recharge les données de catalogue.
@@ -212,7 +217,10 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
           />
 
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <Chip label={`${organizations.length} organisation(s)`} variant="outlined" />
+            <Chip
+              label={`${organizations.length} organisation(s)`}
+              variant="outlined"
+            />
             <Chip label={`${products.length} produit(s)`} variant="outlined" />
             <Chip label={currency} color="primary" />
             <Chip label={theme.name} variant="outlined" />
@@ -343,7 +351,10 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                       >
                         <MenuItem value="">Choisir une organisation</MenuItem>
                         {organizations.map((organization) => (
-                          <MenuItem key={organization.id} value={organization.id}>
+                          <MenuItem
+                            key={organization.id}
+                            value={organization.id}
+                          >
                             {organization.name}
                           </MenuItem>
                         ))}
@@ -443,7 +454,11 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                       <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                         {organization.name ?? 'Organisation sans nom'}
                       </Typography>
-                      <Chip label="Organisation" variant="outlined" size="small" />
+                      <Chip
+                        label="Organisation"
+                        variant="outlined"
+                        size="small"
+                      />
                     </Stack>
                     <Typography sx={{ color: theme.mutedTextColor }}>
                       /{organization.slug ?? 'slug-manquant'}
@@ -502,18 +517,25 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                         alignItems={{ xs: 'flex-start', sm: 'center' }}
                       >
                         <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 700 }}
+                          >
                             {product.name ?? 'Produit sans nom'}
                           </Typography>
                           <Typography sx={{ color: theme.mutedTextColor }}>
-                            {`${product.price ?? 0} ${product.currency ?? currency}${
-                              organization ? ` · ${organization.name}` : ''
-                            }`}
+                            {`${product.price ?? 0} ${
+                              product.currency ?? currency
+                            }${organization ? ` · ${organization.name}` : ''}`}
                           </Typography>
                         </Box>
                         <Chip
-                          label={product.inStock === false ? 'Rupture' : 'Actif'}
-                          color={product.inStock === false ? 'default' : 'primary'}
+                          label={
+                            product.inStock === false ? 'Rupture' : 'Actif'
+                          }
+                          color={
+                            product.inStock === false ? 'default' : 'primary'
+                          }
                           size="small"
                         />
                       </Stack>
