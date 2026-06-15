@@ -11,6 +11,10 @@ vi.mock('aws-amplify/data', () => ({
         list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
         create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
       },
+      Category: {
+        list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
+        create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+      },
       Product: {
         list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
         create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
@@ -43,7 +47,7 @@ describe('App', () => {
       name: /credo storefront/i,
     });
 
-    expect(screen.getByText(/route publique \//i)).toBeTruthy();
+    expect(screen.getByText(/page vitrine publique/i)).toBeTruthy();
   });
 
   it('should render protected admin products route for authenticated user', async () => {

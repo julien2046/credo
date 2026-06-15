@@ -20,25 +20,47 @@ type OrganizationModel = {
   slug: string;
 };
 
+type CategoryModel = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  organizationId: string;
+};
+
 type ProductModel = {
   id: string;
   name: string;
+  slug: string | null;
   description: string | null;
   price: number;
   currency: string | null;
   imageUrl: string | null;
   inStock: boolean | null;
+  published: boolean | null;
   organizationId: string;
+  categoryId: string | null;
 };
 
 type OrganizationCreateInput = Pick<OrganizationModel, 'name' | 'slug'>;
+type CategoryCreateInput = {
+  name: string;
+  slug: string;
+  description?: string;
+  organizationId: string;
+};
 
 type ProductCreateInput = {
   name: string;
+  slug?: string;
   description?: string;
   price: number;
   currency?: string;
+  imageUrl?: string;
+  inStock?: boolean;
+  published?: boolean;
   organizationId: string;
+  categoryId?: string;
 };
 
 export type DataClient = {
@@ -48,6 +70,10 @@ export type DataClient = {
       create: (
         input: OrganizationCreateInput
       ) => CreateResult<OrganizationModel>;
+    };
+    Category: {
+      list: () => ListResult<CategoryModel>;
+      create: (input: CategoryCreateInput) => CreateResult<CategoryModel>;
     };
     Product: {
       list: () => ListResult<ProductModel>;

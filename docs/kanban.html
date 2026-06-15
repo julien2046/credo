@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Credo - Kanban produit</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f5f1;
+        --ink: #20201d;
+        --muted: #64645d;
+        --line: #d9d6cc;
+        --panel: #fffefa;
+        --panel-alt: #f0f6f5;
+        --accent: #2f6f6c;
+        --accent-2: #9f5f35;
+        --accent-3: #6b5a96;
+        --accent-4: #2f5f8f;
+        --danger: #9b3d32;
+        --shadow: 0 18px 40px rgba(42, 39, 32, 0.12);
+        --radius: 8px;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 28px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(260px, 1fr) auto;
+        gap: 24px;
+        align-items: end;
+        margin-bottom: 22px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 4vw, 48px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        max-width: 980px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.55;
+      }
+
+      .meta {
+        display: grid;
+        gap: 8px;
+        min-width: 260px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+      }
+
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        font-size: 13px;
+      }
+
+      .meta-row span:first-child {
+        color: var(--muted);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .metric {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--panel);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 24px;
+        line-height: 1;
+      }
+
+      .metric span {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(300px, 1fr));
+        gap: 14px;
+        align-items: start;
+        overflow-x: auto;
+        padding-bottom: 18px;
+      }
+
+      .column {
+        min-width: 300px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: rgba(255, 254, 250, 0.72);
+        box-shadow: var(--shadow);
+      }
+
+      .column-header {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: var(--radius) var(--radius) 0 0;
+      }
+
+      .column-header h2 {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .count {
+        display: inline-grid;
+        place-items: center;
+        min-width: 28px;
+        height: 24px;
+        border-radius: 999px;
+        background: #ece8dd;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .cards {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .card {
+        display: grid;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent);
+        border-radius: var(--radius);
+        background: var(--panel);
+      }
+
+      .card.foundation {
+        border-left-color: var(--accent);
+      }
+
+      .card.catalog {
+        border-left-color: var(--accent-2);
+      }
+
+      .card.seo {
+        border-left-color: var(--accent-4);
+      }
+
+      .card.marketing {
+        border-left-color: var(--accent-3);
+      }
+
+      .card.security {
+        border-left-color: var(--danger);
+      }
+
+      .card-title {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: start;
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.28;
+        letter-spacing: 0;
+      }
+
+      .ticket {
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .card p {
+        margin: 0;
+        color: #464640;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        padding: 4px 7px;
+        border: 1px solid #d7d2c6;
+        border-radius: 999px;
+        background: #f7f4eb;
+        color: #555047;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .tag.must {
+        border-color: #e1b0a8;
+        background: #fff0ed;
+        color: var(--danger);
+      }
+
+      .tag.done {
+        border-color: #9dc5bd;
+        background: #e8f4f2;
+        color: var(--accent);
+      }
+
+      .tag.later {
+        border-color: #c2b8db;
+        background: #f1eef8;
+        color: var(--accent-3);
+      }
+
+      .footer-note {
+        max-width: 980px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 900px) {
+        .page {
+          padding: 18px;
+        }
+
+        .topbar,
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .meta {
+          min-width: 0;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .page {
+          padding: 0;
+        }
+
+        .board {
+          display: block;
+          overflow: visible;
+        }
+
+        .column {
+          break-inside: avoid;
+          margin-bottom: 14px;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="topbar" aria-labelledby="page-title">
+        <div>
+          <h1 id="page-title">Credo - Kanban produit</h1>
+          <p class="subtitle">
+            Vue consolidée des billets pour la boutique en ligne white-label :
+            base technique, catalogue, SEO statique, checkout, marketing
+            assisté, exploitation Amplify et extensions post-MVP.
+          </p>
+        </div>
+        <aside class="meta" aria-label="Contexte du tableau">
+          <div class="meta-row">
+            <span>Dernière mise à jour</span><strong>2026-06-15</strong>
+          </div>
+          <div class="meta-row">
+            <span>Architecture</span><strong>Nx + Amplify Gen 2</strong>
+          </div>
+          <div class="meta-row">
+            <span>Modèle client</span><strong>1 app Amplify/client</strong>
+          </div>
+          <div class="meta-row">
+            <span>Cap actuel</span><strong>Catalogue réel</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="metrics" aria-label="Résumé">
+        <div class="metric">
+          <strong>7</strong><span>colonnes de suivi</span>
+        </div>
+        <div class="metric">
+          <strong>34</strong><span>billets consolidés</span>
+        </div>
+        <div class="metric">
+          <strong>4</strong><span>routes SEO prioritaires</span>
+        </div>
+        <div class="metric">
+          <strong>2</strong><span>clients Amplify validés</span>
+        </div>
+      </section>
+
+      <section class="board" aria-label="Tableau kanban des billets">
+        <article class="column">
+          <header class="column-header">
+            <h2>Fondations validées</h2>
+            <span class="count">5</span>
+          </header>
+          <div class="cards">
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Monorepo Nx partagé</h3>
+                <span class="ticket">CRE-001</span>
+              </div>
+              <p>
+                Conserver un seul repo avec `apps/storefront`, `amplify/`
+                partagé et des libs par responsabilité.
+              </p>
+              <div class="tags">
+                <span class="tag done">fait</span
+                ><span class="tag">architecture</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Amplify single-tenant par client</h3>
+                <span class="ticket">CRE-002</span>
+              </div>
+              <p>
+                `client-a` et `client-b` valident le modèle : même code, app
+                Amplify, domaine, secrets et backend isolés.
+              </p>
+              <div class="tags">
+                <span class="tag done">fait</span><span class="tag">ops</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Branding par `CLIENT_ID` et `THEME_ID`</h3>
+                <span class="ticket">CRE-003</span>
+              </div>
+              <p>
+                Le client et le thème sont sélectionnés par variables
+                d’environnement au déploiement et en local.
+              </p>
+              <div class="tags">
+                <span class="tag done">fait</span
+                ><span class="tag">themes</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Auth SMS OTP fonctionnelle</h3>
+                <span class="ticket">CRE-004</span>
+              </div>
+              <p>
+                Création, confirmation, connexion et logout sont en place avec
+                Cognito/Amplify en mode simplifié.
+              </p>
+              <div class="tags">
+                <span class="tag done">fait</span><span class="tag">auth</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Routes publiques isolées</h3>
+                <span class="ticket">CRE-005</span>
+              </div>
+              <p>
+                `/`, `/c/:categorySlug`, `/p/:productSlug`, `/promo/:promoSlug`
+                et `/cart` sont séparées du bloc admin/auth.
+              </p>
+              <div class="tags">
+                <span class="tag done">fait</span
+                ><span class="tag">routing</span>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="column">
+          <header class="column-header">
+            <h2>Priorité actuelle</h2>
+            <span class="count">6</span>
+          </header>
+          <div class="cards">
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>CRUD produits complet</h3>
+                <span class="ticket">CRE-010</span>
+              </div>
+              <p>
+                Finaliser création, édition, liste, statut de publication, prix,
+                description, images et validations.
+              </p>
+              <div class="tags">
+                <span class="tag must">priorité</span
+                ><span class="tag">catalogue</span>
+              </div>
+            </section>
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>CRUD catégories</h3>
+                <span class="ticket">CRE-011</span>
+              </div>
+              <p>
+                Créer les catégories avec nom, slug stable, ordre, statut et
+                relation avec les produits.
+              </p>
+              <div class="tags">
+                <span class="tag must">priorité</span
+                ><span class="tag">catalogue</span>
+              </div>
+            </section>
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>Slugs propres et stables</h3>
+                <span class="ticket">CRE-012</span>
+              </div>
+              <p>
+                Mettre en place la génération et la validation de slugs pour
+                produits, catégories et promotions.
+              </p>
+              <div class="tags">
+                <span class="tag must">SEO</span><span class="tag">data</span>
+              </div>
+            </section>
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>Upload images produits</h3>
+                <span class="ticket">CRE-013</span>
+              </div>
+              <p>
+                Brancher les images produit sur le stockage prévu, avec alt text
+                et image principale.
+              </p>
+              <div class="tags">
+                <span class="tag">catalogue</span><span class="tag">media</span>
+              </div>
+            </section>
+            <section class="card seo">
+              <div class="card-title">
+                <h3>Couche `storefront-content`</h3>
+                <span class="ticket">CRE-014</span>
+              </div>
+              <p>
+                Créer `getProductBySlug`, `getCategoryBySlug`, `getPromoBySlug`
+                et `listPrerenderableSlugs`.
+              </p>
+              <div class="tags">
+                <span class="tag must">prerender</span
+                ><span class="tag">data-access</span>
+              </div>
+            </section>
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>Pages publiques branchées</h3>
+                <span class="ticket">CRE-015</span>
+              </div>
+              <p>
+                Remplacer les placeholders des pages catégorie et produit par
+                les vraies données catalogue.
+              </p>
+              <div class="tags">
+                <span class="tag must">storefront</span
+                ><span class="tag">MVP</span>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="column">
+          <header class="column-header">
+            <h2>MVP e-commerce</h2>
+            <span class="count">6</span>
+          </header>
+          <div class="cards">
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>Panier local</h3>
+                <span class="ticket">CRE-020</span>
+              </div>
+              <p>
+                Gérer ajout, suppression, quantités, totaux affichés et
+                persistance locale temporaire.
+              </p>
+              <div class="tags">
+                <span class="tag">cart</span><span class="tag">MVP</span>
+              </div>
+            </section>
+            <section class="card security">
+              <div class="card-title">
+                <h3>Checkout Stripe serverless</h3>
+                <span class="ticket">CRE-021</span>
+              </div>
+              <p>
+                Créer `POST /api/checkout/create-intent` ou équivalent Amplify
+                Function avec recalcul serveur.
+              </p>
+              <div class="tags">
+                <span class="tag must">Stripe</span
+                ><span class="tag">server</span>
+              </div>
+            </section>
+            <section class="card security">
+              <div class="card-title">
+                <h3>Webhook Stripe</h3>
+                <span class="ticket">CRE-022</span>
+              </div>
+              <p>
+                Vérifier la signature, écouter le paiement confirmé et créer la
+                commande en statut `PAID`.
+              </p>
+              <div class="tags">
+                <span class="tag must">Stripe</span
+                ><span class="tag">orders</span>
+              </div>
+            </section>
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>Espace client minimal</h3>
+                <span class="ticket">CRE-023</span>
+              </div>
+              <p>
+                Ajouter `/account/orders`, `/account/orders/:id` et
+                `/account/profile` pour commandes et adresse.
+              </p>
+              <div class="tags">
+                <span class="tag">account</span><span class="tag">MVP</span>
+              </div>
+            </section>
+            <section class="card catalog">
+              <div class="card-title">
+                <h3>Import CSV canonique</h3>
+                <span class="ticket">CRE-024</span>
+              </div>
+              <p>
+                Commencer par un format strict partagé. Les mappings spéciaux
+                restent client-specific.
+              </p>
+              <div class="tags">
+                <span class="tag">import</span
+                ><span class="tag">catalogue</span>
+              </div>
+            </section>
+            <section class="card security">
+              <div class="card-title">
+                <h3>RBAC marchand/client</h3>
+                <span class="ticket">CRE-025</span>
+              </div>
+              <p>
+                Remplacer le mode temporaire “tout utilisateur connecté = admin”
+                par `MERCHANT` et `CUSTOMER`.
+              </p>
+              <div class="tags">
+                <span class="tag must">sécurité</span
+                ><span class="tag">prod</span>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="column">
+          <header class="column-header">
+            <h2>SEO et pre-render</h2>
+            <span class="count">5</span>
+          </header>
+          <div class="cards">
+            <section class="card seo">
+              <div class="card-title">
+                <h3>Routes pré-rendables</h3>
+                <span class="ticket">CRE-030</span>
+              </div>
+              <p>
+                Pré-rendre `/`, `/c/:categorySlug`, `/p/:productSlug` et
+                `/promo/:promoSlug`.
+              </p>
+              <div class="tags">
+                <span class="tag must">SEO</span><span class="tag">RRv7</span>
+              </div>
+            </section>
+            <section class="card seo">
+              <div class="card-title">
+                <h3>Source de données build</h3>
+                <span class="ticket">CRE-031</span>
+              </div>
+              <p>
+                Démarrer avec un snapshot JSON, puis évoluer vers API readonly
+                ou build AWS avec accès DynamoDB.
+              </p>
+              <div class="tags">
+                <span class="tag">build</span><span class="tag">data</span>
+              </div>
+            </section>
+            <section class="card seo">
+              <div class="card-title">
+                <h3>Métas e-commerce</h3>
+                <span class="ticket">CRE-032</span>
+              </div>
+              <p>
+                Ajouter title, meta description, canonical, sitemap, robots et
+                JSON-LD Product + Offer.
+              </p>
+              <div class="tags">
+                <span class="tag must">SEO</span><span class="tag">schema</span>
+              </div>
+            </section>
+            <section class="card seo">
+              <div class="card-title">
+                <h3>Stock temps réel</h3>
+                <span class="ticket">CRE-033</span>
+              </div>
+              <p>
+                Pré-rendre le contenu SEO et rafraîchir le stock côté client
+                après hydratation.
+              </p>
+              <div class="tags">
+                <span class="tag">stock</span><span class="tag">API</span>
+              </div>
+            </section>
+            <section class="card seo">
+              <div class="card-title">
+                <h3>Rebuild Amplify sur publication</h3>
+                <span class="ticket">CRE-034</span>
+              </div>
+              <p>
+                Déclencher un rebuild via Lambda, EventBridge/DynamoDB Stream et
+                webhook Amplify ou `StartJob`.
+              </p>
+              <div class="tags">
+                <span class="tag later">plus tard</span
+                ><span class="tag">ops</span>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="column">
+          <header class="column-header">
+            <h2>Marketing assisté</h2>
+            <span class="count">5</span>
+          </header>
+          <div class="cards">
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>PromotionEvent</h3>
+                <span class="ticket">CRE-040</span>
+              </div>
+              <p>
+                Créer un événement promo avec produits mis en avant, bannière,
+                période, slug et page dédiée.
+              </p>
+              <div class="tags">
+                <span class="tag">marketing</span><span class="tag">MVP</span>
+              </div>
+            </section>
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Newsletter preview</h3>
+                <span class="ticket">CRE-041</span>
+              </div>
+              <p>
+                Générer une newsletter d’événement avec ton de marque, CTA et
+                aperçu desktop/mobile.
+              </p>
+              <div class="tags">
+                <span class="tag">OpenAI</span><span class="tag">preview</span>
+              </div>
+            </section>
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Posts Instagram/Facebook</h3>
+                <span class="ticket">CRE-042</span>
+              </div>
+              <p>
+                Générer 3 variantes, hashtags, formats court/long et bouton
+                copier. Pas de publication directe au MVP.
+              </p>
+              <div class="tags">
+                <span class="tag">social</span><span class="tag">drafts</span>
+              </div>
+            </section>
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Aide fiche produit</h3>
+                <span class="ticket">CRE-043</span>
+              </div>
+              <p>
+                Améliorer descriptions, bénéfices, bullets, SEO, short
+                description et meta description.
+              </p>
+              <div class="tags">
+                <span class="tag">OpenAI</span
+                ><span class="tag">catalogue</span>
+              </div>
+            </section>
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Assistant Google Ads</h3>
+                <span class="ticket">CRE-044</span>
+              </div>
+              <p>
+                Générer titres, descriptions, URL finale, mots-clés, budget,
+                zone et export JSON.
+              </p>
+              <div class="tags">
+                <span class="tag later">après MVP</span
+                ><span class="tag">ads</span>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="column">
+          <header class="column-header">
+            <h2>Ops et clients</h2>
+            <span class="count">4</span>
+          </header>
+          <div class="cards">
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Doc nouveau client Amplify</h3>
+                <span class="ticket">CRE-050</span>
+              </div>
+              <p>
+                Transformer le runbook en doc courte : config, thème, Amplify
+                App, env vars, buildspec, validation.
+              </p>
+              <div class="tags">
+                <span class="tag">docs</span><span class="tag">ops</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Gestion secrets par client</h3>
+                <span class="ticket">CRE-051</span>
+              </div>
+              <p>
+                Standardiser `STRIPE_*`, `OPENAI_*`, email, social tokens et
+                autres variables sensibles.
+              </p>
+              <div class="tags">
+                <span class="tag">AWS</span><span class="tag">secrets</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Domaine custom</h3>
+                <span class="ticket">CRE-052</span>
+              </div>
+              <p>
+                Documenter ajout du domaine, association `www`, DNS, certificat
+                SSL et vérifications.
+              </p>
+              <div class="tags">
+                <span class="tag">hosting</span><span class="tag">client</span>
+              </div>
+            </section>
+            <section class="card foundation">
+              <div class="card-title">
+                <h3>Switch backend local</h3>
+                <span class="ticket">CRE-053</span>
+              </div>
+              <p>
+                Garder le mode “un `amplify_outputs.json` à la fois” avec `ampx
+                generate outputs` ou sandbox.
+              </p>
+              <div class="tags">
+                <span class="tag">local</span><span class="tag">Amplify</span>
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="column">
+          <header class="column-header">
+            <h2>Post-MVP</h2>
+            <span class="count">3</span>
+          </header>
+          <div class="cards">
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Publication directe réseaux</h3>
+                <span class="ticket">CRE-060</span>
+              </div>
+              <p>
+                Brancher Meta API, LinkedIn ou autre seulement après validation
+                du mode drafts/copie.
+              </p>
+              <div class="tags">
+                <span class="tag later">post-MVP</span
+                ><span class="tag">social</span>
+              </div>
+            </section>
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Calendrier éditorial et automation</h3>
+                <span class="ticket">CRE-061</span>
+              </div>
+              <p>
+                Planifier posts, newsletters, suivis après achat et rappels
+                d’avis client.
+              </p>
+              <div class="tags">
+                <span class="tag later">post-MVP</span
+                ><span class="tag">automation</span>
+              </div>
+            </section>
+            <section class="card marketing">
+              <div class="card-title">
+                <h3>Analytics enrichi</h3>
+                <span class="ticket">CRE-062</span>
+              </div>
+              <p>
+                Aller au-delà de GA4 avec reporting intégré, segmentation et
+                indicateurs d’engagement.
+              </p>
+              <div class="tags">
+                <span class="tag later">post-MVP</span
+                ><span class="tag">analytics</span>
+              </div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <p class="footer-note">
+        Règle de lecture : le prochain vrai jalon produit est le catalogue réel.
+        Les blocs SEO, Stripe et marketing deviennent fiables seulement après
+        des produits, catégories, slugs et pages publiques branchés sur de
+        vraies données.
+      </p>
+    </main>
+  </body>
+</html>

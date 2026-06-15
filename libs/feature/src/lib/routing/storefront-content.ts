@@ -1,14 +1,29 @@
+import type { Category, Product } from '@credo/data-access';
+import { getDataClient } from '@credo/platform-amplify';
+import { getErrorMessage } from '@credo/shared';
+
 export type StorefrontCategoryContent = {
+  id: string;
   slug: string;
   title: string;
   summary: string;
 };
 
 export type StorefrontProductContent = {
+  id: string;
   slug: string;
   title: string;
   summary: string;
-  categorySlug: string;
+  categorySlug: string | null;
+  imageUrl: string | null;
+  price: number;
+  currency: string;
+  inStock: boolean;
+};
+
+export type StorefrontCategoryPageContent = {
+  category: StorefrontCategoryContent;
+  products: StorefrontProductContent[];
 };
 
 export type StorefrontPromoContent = {
@@ -17,51 +32,139 @@ export type StorefrontPromoContent = {
   summary: string;
 };
 
-const categories: StorefrontCategoryContent[] = [
-  {
-    slug: 'featured',
-    title: 'Categorie Featured',
-    summary: 'Selection mise en avant pour la page categorie publique.',
-  },
-];
-
-const products: StorefrontProductContent[] = [
-  {
-    slug: 'demo-product',
-    title: 'Demo Product',
-    summary: 'Produit de demonstration pour preparer le rendu statique SEO.',
-    categorySlug: 'featured',
-  },
-];
-
 const promos: StorefrontPromoContent[] = [
   {
     slug: 'summer',
     title: 'Promo Summer',
-    summary: 'Promotion exemple pour preparer une page evenementielle indexable.',
+    summary:
+      'Promotion exemple pour preparer une page evenementielle indexable.',
   },
 ];
 
-/**
- * Retourne une catégorie publique par slug.
- */
-export function getCategoryContentBySlug(
-  slug: string | undefined
+function toCategoryContent(
+  category: Category | null | undefined
 ): StorefrontCategoryContent | null {
-  if (!slug) return null;
+  if (!category?.id || !category.name || !category.slug) return null;
 
-  return categories.find((category) => category.slug === slug) ?? null;
+  return {
+    id: category.id,
+    slug: category.slug,
+    title: category.name,
+    summary:
+      category.description ??
+      `Selection de produits pour la categorie ${category.name}.`,
+  };
+}
+
+function toProductContent(
+  product: Product | null | undefined,
+  category: Category | null | undefined
+): StorefrontProductContent | null {
+  if (
+    !product?.id ||
+    !product.name ||
+    !product.slug ||
+    product.price === null
+  ) {
+    return null;
+  }
+
+  if (!product.published) return null;
+
+  return {
+    id: product.id,
+    slug: product.slug,
+    title: product.name,
+    summary:
+      product.description ??
+      `Fiche produit ${product.name} prete pour le storefront public.`,
+    categorySlug: category?.slug ?? null,
+    imageUrl: product.imageUrl ?? null,
+    price: product.price,
+    currency: product.currency ?? 'EUR',
+    inStock: product.inStock !== false,
+  };
+}
+
+async function loadCatalogContent() {
+  const dataClient = getDataClient();
+  const [categoryResult, productResult] = await Promise.all([
+    dataClient.models.Category.list(),
+    dataClient.models.Product.list(),
+  ]);
+
+  const message = [
+    getErrorMessage(categoryResult?.errors),
+    getErrorMessage(productResult?.errors),
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  if (message) {
+    throw new Error(message);
+  }
+
+  const categories = Array.isArray(categoryResult?.data)
+    ? (categoryResult.data as Category[])
+    : [];
+  const products = Array.isArray(productResult?.data)
+    ? (productResult.data as Product[])
+    : [];
+  const categoriesById = new Map(
+    categories
+      .filter((category) => category.id)
+      .map((category) => [category.id, category])
+  );
+
+  return {
+    categories,
+    products,
+    categoriesById,
+  };
 }
 
 /**
- * Retourne un produit public par slug.
+ * Retourne une categorie publique et ses produits publies par slug.
  */
-export function getProductContentBySlug(
+export async function getCategoryContentBySlug(
   slug: string | undefined
-): StorefrontProductContent | null {
+): Promise<StorefrontCategoryPageContent | null> {
   if (!slug) return null;
 
-  return products.find((product) => product.slug === slug) ?? null;
+  const { categories, products, categoriesById } = await loadCatalogContent();
+  const category = categories.find((item) => item.slug === slug);
+  const categoryContent = toCategoryContent(category);
+
+  if (!category || !categoryContent) return null;
+
+  return {
+    category: categoryContent,
+    products: products
+      .filter((product) => product.categoryId === category.id)
+      .map((product) =>
+        toProductContent(product, categoriesById.get(category.id))
+      )
+      .filter((product): product is StorefrontProductContent =>
+        Boolean(product)
+      ),
+  };
+}
+
+/**
+ * Retourne un produit public publie par slug.
+ */
+export async function getProductContentBySlug(
+  slug: string | undefined
+): Promise<StorefrontProductContent | null> {
+  if (!slug) return null;
+
+  const { products, categoriesById } = await loadCatalogContent();
+  const product = products.find((item) => item.slug === slug);
+
+  return toProductContent(
+    product,
+    product?.categoryId ? categoriesById.get(product.categoryId) : null
+  );
 }
 
 /**
@@ -76,14 +179,30 @@ export function getPromoContentBySlug(
 }
 
 /**
- * Liste minimale de routes candidates au prerender statique.
+ * Liste les routes candidates au prerender statique.
  */
-export function listPrerenderableStorefrontRoutes(): string[] {
+export async function listPrerenderableStorefrontRoutes(): Promise<string[]> {
+  const { categories, products, categoriesById } = await loadCatalogContent();
+
   return [
     '/',
-    '/cart',
-    ...categories.map((category) => `/c/${category.slug}`),
-    ...products.map((product) => `/p/${product.slug}`),
+    ...categories
+      .map((category) => toCategoryContent(category))
+      .filter((category): category is StorefrontCategoryContent =>
+        Boolean(category)
+      )
+      .map((category) => `/c/${category.slug}`),
+    ...products
+      .map((product) =>
+        toProductContent(
+          product,
+          product.categoryId ? categoriesById.get(product.categoryId) : null
+        )
+      )
+      .filter((product): product is StorefrontProductContent =>
+        Boolean(product)
+      )
+      .map((product) => `/p/${product.slug}`),
     ...promos.map((promo) => `/promo/${promo.slug}`),
   ];
 }
