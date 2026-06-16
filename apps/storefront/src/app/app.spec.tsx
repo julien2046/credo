@@ -6,6 +6,14 @@ import { vi } from 'vitest';
 
 vi.mock('aws-amplify/data', () => ({
   generateClient: () => ({
+    queries: {
+      listPublicCategories: vi
+        .fn()
+        .mockResolvedValue({ data: [], errors: undefined }),
+      listPublicProducts: vi
+        .fn()
+        .mockResolvedValue({ data: [], errors: undefined }),
+    },
     models: {
       Organization: {
         list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
@@ -14,10 +22,14 @@ vi.mock('aws-amplify/data', () => ({
       Category: {
         list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
         create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+        update: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+        delete: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
       },
       Product: {
         list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
         create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+        update: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
+        delete: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
       },
     },
   }),

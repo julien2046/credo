@@ -37,6 +37,49 @@ const schema = a.schema({
       category: a.belongsTo('Category', 'categoryId'),
     })
     .authorization((allow) => [allow.authenticated()]),
+
+  PublicCategory: a.customType({
+    id: a.id().required(),
+    name: a.string().required(),
+    slug: a.string().required(),
+    description: a.string(),
+    organizationId: a.id().required(),
+  }),
+
+  PublicProduct: a.customType({
+    id: a.id().required(),
+    name: a.string().required(),
+    slug: a.string().required(),
+    description: a.string(),
+    price: a.float().required(),
+    currency: a.string(),
+    imageUrl: a.string(),
+    inStock: a.boolean(),
+    organizationId: a.id().required(),
+    categoryId: a.id(),
+  }),
+
+  listPublicCategories: a
+    .query()
+    .returns(a.ref('PublicCategory').array())
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref('Category'),
+        entry: './list-public-categories.js',
+      })
+    ),
+
+  listPublicProducts: a
+    .query()
+    .returns(a.ref('PublicProduct').array())
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref('Product'),
+        entry: './list-public-products.js',
+      })
+    ),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -45,5 +88,8 @@ export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: 'userPool',
+    apiKeyAuthorizationMode: {
+      expiresInDays: 365,
+    },
   },
 });

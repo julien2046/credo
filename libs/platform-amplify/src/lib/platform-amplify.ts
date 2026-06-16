@@ -14,6 +14,15 @@ type CreateResult<TData> = Promise<{
   errors: GraphQLErrors;
 }>;
 
+type MutationResult<TData> = Promise<{
+  data: TData | null | undefined;
+  errors: GraphQLErrors;
+}>;
+
+type QueryOptions = {
+  authMode?: 'apiKey' | 'userPool';
+};
+
 type OrganizationModel = {
   id: string;
   name: string;
@@ -42,6 +51,25 @@ type ProductModel = {
   categoryId: string | null;
 };
 
+type PublicCategoryModel = Pick<
+  CategoryModel,
+  'id' | 'name' | 'slug' | 'description' | 'organizationId'
+>;
+
+type PublicProductModel = Pick<
+  ProductModel,
+  | 'id'
+  | 'name'
+  | 'slug'
+  | 'description'
+  | 'price'
+  | 'currency'
+  | 'imageUrl'
+  | 'inStock'
+  | 'organizationId'
+  | 'categoryId'
+>;
+
 type OrganizationCreateInput = Pick<OrganizationModel, 'name' | 'slug'>;
 type CategoryCreateInput = {
   name: string;
@@ -49,6 +77,10 @@ type CategoryCreateInput = {
   description?: string;
   organizationId: string;
 };
+type CategoryUpdateInput = Partial<
+  Pick<CategoryModel, 'name' | 'slug' | 'description' | 'organizationId'>
+> &
+  Pick<CategoryModel, 'id'>;
 
 type ProductCreateInput = {
   name: string;
@@ -62,8 +94,36 @@ type ProductCreateInput = {
   organizationId: string;
   categoryId?: string;
 };
+type ProductUpdateInput = Partial<
+  Pick<
+    ProductModel,
+    | 'name'
+    | 'slug'
+    | 'description'
+    | 'price'
+    | 'currency'
+    | 'imageUrl'
+    | 'inStock'
+    | 'published'
+    | 'organizationId'
+    | 'categoryId'
+  >
+> &
+  Pick<ProductModel, 'id'>;
+
+type DeleteInput = {
+  id: string;
+};
 
 export type DataClient = {
+  queries: {
+    listPublicCategories: (
+      options?: QueryOptions
+    ) => ListResult<PublicCategoryModel>;
+    listPublicProducts: (
+      options?: QueryOptions
+    ) => ListResult<PublicProductModel>;
+  };
   models: {
     Organization: {
       list: () => ListResult<OrganizationModel>;
@@ -74,10 +134,14 @@ export type DataClient = {
     Category: {
       list: () => ListResult<CategoryModel>;
       create: (input: CategoryCreateInput) => CreateResult<CategoryModel>;
+      update: (input: CategoryUpdateInput) => MutationResult<CategoryModel>;
+      delete: (input: DeleteInput) => MutationResult<CategoryModel>;
     };
     Product: {
       list: () => ListResult<ProductModel>;
       create: (input: ProductCreateInput) => CreateResult<ProductModel>;
+      update: (input: ProductUpdateInput) => MutationResult<ProductModel>;
+      delete: (input: DeleteInput) => MutationResult<ProductModel>;
     };
   };
 };

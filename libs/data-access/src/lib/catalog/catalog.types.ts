@@ -25,3 +25,24 @@ export type Product = {
   organizationId: string | null;
   categoryId: string | null;
 };
+
+export type PublicCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  organizationId: string;
+};
+
+export type PublicProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  currency: string | null;
+  imageUrl: string | null;
+  inStock: boolean | null;
+  organizationId: string;
+  categoryId: string | null;
+};

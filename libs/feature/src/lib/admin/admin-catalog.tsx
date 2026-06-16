@@ -76,6 +76,11 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
   const [organizationName, setOrganizationName] = useState('');
   const [organizationSlug, setOrganizationSlug] = useState('');
   const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null
+  );
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -122,9 +127,54 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     },
   });
 
+  const {
+    control: editCategoryControl,
+    formState: {
+      errors: editCategoryFormErrors,
+      isSubmitting: isEditCategorySubmitting,
+    },
+    handleSubmit: handleEditCategoryFormSubmit,
+    register: registerEditCategory,
+    reset: resetEditCategory,
+  } = useForm<CategoryFormValues>({
+    defaultValues: {
+      name: '',
+      slug: '',
+      description: '',
+      organizationId: '',
+    },
+  });
+
+  const {
+    control: editProductControl,
+    formState: {
+      errors: editProductFormErrors,
+      isSubmitting: isEditProductSubmitting,
+    },
+    handleSubmit: handleEditProductFormSubmit,
+    register: registerEditProduct,
+    reset: resetEditProduct,
+    setValue: setEditProductValue,
+    watch: watchEditProduct,
+  } = useForm<ProductFormValues>({
+    defaultValues: {
+      name: '',
+      slug: '',
+      description: '',
+      imageUrl: '',
+      price: '',
+      organizationId: '',
+      categoryId: '',
+      inStock: true,
+      published: false,
+    },
+  });
+
   const selectedCategoryOrganizationId = watchCategory('organizationId');
   const selectedProductOrganizationId = watchProduct('organizationId');
   const selectedProductCategoryId = watchProduct('categoryId');
+  const selectedEditProductOrganizationId = watchEditProduct('organizationId');
+  const selectedEditProductCategoryId = watchEditProduct('categoryId');
 
   const organizationsById = useMemo(
     () =>
@@ -143,6 +193,29 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
         (category) => category.organizationId === selectedProductOrganizationId
       ),
     [categories, selectedProductOrganizationId]
+  );
+  const editProductCategories = useMemo(
+    () =>
+      categories.filter(
+        (category) =>
+          category.organizationId === selectedEditProductOrganizationId
+      ),
+    [categories, selectedEditProductOrganizationId]
+  );
+  const editingCategory = useMemo(
+    () =>
+      editingCategoryId
+        ? categories.find((category) => category.id === editingCategoryId) ??
+          null
+        : null,
+    [categories, editingCategoryId]
+  );
+  const editingProduct = useMemo(
+    () =>
+      editingProductId
+        ? products.find((product) => product.id === editingProductId) ?? null
+        : null,
+    [products, editingProductId]
   );
 
   /**
@@ -264,6 +337,26 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
       });
     }
   }, [productCategories, selectedProductCategoryId, setProductValue]);
+
+  useEffect(() => {
+    const nextCategoryId =
+      editProductCategories.find(
+        (category) => category.id === selectedEditProductCategoryId
+      )?.id ??
+      editProductCategories[0]?.id ??
+      '';
+
+    if (nextCategoryId !== selectedEditProductCategoryId) {
+      setEditProductValue('categoryId', nextCategoryId, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+    }
+  }, [
+    editProductCategories,
+    selectedEditProductCategoryId,
+    setEditProductValue,
+  ]);
 
   /**
    * Cree une organisation puis recharge le catalogue.
@@ -420,6 +513,242 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
       const message =
         err instanceof Error ? err.message : 'Unable to save product';
       setError(message);
+    }
+  };
+
+  const startCategoryEdit = (category: Category) => {
+    setEditingProductId(null);
+    setEditingCategoryId(category.id);
+    resetEditCategory({
+      name: category.name ?? '',
+      slug: category.slug ?? '',
+      description: category.description ?? '',
+      organizationId: category.organizationId ?? '',
+    });
+  };
+
+  const startProductEdit = (product: Product) => {
+    setEditingCategoryId(null);
+    setEditingProductId(product.id);
+    resetEditProduct({
+      name: product.name ?? '',
+      slug: product.slug ?? '',
+      description: product.description ?? '',
+      imageUrl: product.imageUrl ?? '',
+      price: product.price === null ? '' : String(product.price),
+      organizationId: product.organizationId ?? '',
+      categoryId: product.categoryId ?? '',
+      inStock: product.inStock !== false,
+      published: Boolean(product.published),
+    });
+  };
+
+  const handleCategoryEditSubmit = async (values: CategoryFormValues) => {
+    if (!editingCategory) return;
+
+    const name = values.name.trim();
+    const slug = normalizeSlug(values.slug || values.name);
+    const description = values.description.trim();
+
+    if (!name || !slug || !values.organizationId) return;
+
+    if (
+      categories.some(
+        (category) =>
+          category.id !== editingCategory.id &&
+          category.organizationId === values.organizationId &&
+          category.slug === slug
+      )
+    ) {
+      setError(`Le slug categorie "${slug}" existe deja pour cette boutique.`);
+      return;
+    }
+
+    setActionId(`category:${editingCategory.id}`);
+    setError(null);
+
+    try {
+      const result = await dataClient.models.Category.update({
+        id: editingCategory.id,
+        name,
+        slug,
+        description: description || null,
+        organizationId: values.organizationId,
+      });
+      const message = getErrorMessage(result?.errors);
+
+      if (message) {
+        setError(message);
+        return;
+      }
+
+      setEditingCategoryId(null);
+      await loadData();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unable to update category';
+      setError(message);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleProductEditSubmit = async (values: ProductFormValues) => {
+    if (!editingProduct) return;
+
+    const name = values.name.trim();
+    const slug = normalizeSlug(values.slug || values.name);
+    const description = values.description.trim();
+    const imageUrl = values.imageUrl.trim();
+    const price = Number(values.price);
+
+    if (
+      !name ||
+      !slug ||
+      !values.organizationId ||
+      !values.categoryId ||
+      !Number.isFinite(price)
+    ) {
+      return;
+    }
+
+    if (
+      products.some(
+        (product) => product.id !== editingProduct.id && product.slug === slug
+      )
+    ) {
+      setError(`Le slug produit "${slug}" existe deja.`);
+      return;
+    }
+
+    setActionId(`product:${editingProduct.id}`);
+    setError(null);
+
+    try {
+      const result = await dataClient.models.Product.update({
+        id: editingProduct.id,
+        name,
+        slug,
+        description: description || null,
+        imageUrl: imageUrl || null,
+        price,
+        currency,
+        organizationId: values.organizationId,
+        categoryId: values.categoryId,
+        inStock: values.inStock,
+        published: values.published,
+      });
+      const message = getErrorMessage(result?.errors);
+
+      if (message) {
+        setError(message);
+        return;
+      }
+
+      setEditingProductId(null);
+      await loadData();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unable to update product';
+      setError(message);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleProductUpdate = async (
+    product: Product,
+    patch: Partial<Pick<Product, 'inStock' | 'published'>>
+  ) => {
+    if (!product.id) return;
+
+    setActionId(`product:${product.id}`);
+    setError(null);
+
+    try {
+      const result = await dataClient.models.Product.update({
+        id: product.id,
+        ...patch,
+      });
+      const message = getErrorMessage(result?.errors);
+
+      if (message) {
+        setError(message);
+        return;
+      }
+
+      await loadData();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unable to update product';
+      setError(message);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleProductDelete = async (product: Product) => {
+    if (!product.id) return;
+
+    setActionId(`product:${product.id}`);
+    setError(null);
+
+    try {
+      const result = await dataClient.models.Product.delete({
+        id: product.id,
+      });
+      const message = getErrorMessage(result?.errors);
+
+      if (message) {
+        setError(message);
+        return;
+      }
+
+      await loadData();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unable to delete product';
+      setError(message);
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleCategoryDelete = async (category: Category) => {
+    if (!category.id) return;
+
+    const hasProducts = products.some(
+      (product) => product.categoryId === category.id
+    );
+
+    if (hasProducts) {
+      setError(
+        'Cette categorie contient encore des produits. Supprime ou deplace les produits avant.'
+      );
+      return;
+    }
+
+    setActionId(`category:${category.id}`);
+    setError(null);
+
+    try {
+      const result = await dataClient.models.Category.delete({
+        id: category.id,
+      });
+      const message = getErrorMessage(result?.errors);
+
+      if (message) {
+        setError(message);
+        return;
+      }
+
+      await loadData();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unable to delete category';
+      setError(message);
+    } finally {
+      setActionId(null);
     }
   };
 
@@ -787,6 +1116,269 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
+      {editingCategory ? (
+        <StorefrontCard title="Modifier la categorie" theme={theme}>
+          <Stack spacing={2.5}>
+            <SectionLead
+              title={editingCategory.name ?? 'Categorie'}
+              description="Mets a jour le nom, le slug, la description ou le rattachement boutique."
+            />
+            <Box
+              component="form"
+              onSubmit={handleEditCategoryFormSubmit(handleCategoryEditSubmit)}
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              }}
+            >
+              <TextField
+                label="Nom de la categorie"
+                {...registerEditCategory('name', {
+                  required: 'Le nom de la categorie est requis.',
+                })}
+                error={Boolean(editCategoryFormErrors.name)}
+                helperText={editCategoryFormErrors.name?.message}
+                fullWidth
+              />
+              <TextField
+                label="Slug"
+                {...registerEditCategory('slug')}
+                helperText="Laisse vide pour le regénérer depuis le nom."
+                fullWidth
+              />
+              <TextField
+                label="Description"
+                {...registerEditCategory('description')}
+                multiline
+                minRows={2}
+                fullWidth
+              />
+              <Controller
+                name="organizationId"
+                control={editCategoryControl}
+                rules={{
+                  required: 'Choisis une organisation.',
+                }}
+                render={({ field }) => (
+                  <TextField
+                    select
+                    label="Organisation"
+                    helperText={editCategoryFormErrors.organizationId?.message}
+                    error={Boolean(editCategoryFormErrors.organizationId)}
+                    fullWidth
+                    {...field}
+                  >
+                    <MenuItem value="">Choisir une organisation</MenuItem>
+                    {organizations.map((organization) => (
+                      <MenuItem key={organization.id} value={organization.id}>
+                        {organization.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={
+                    isEditCategorySubmitting ||
+                    actionId === `category:${editingCategory.id}`
+                  }
+                >
+                  Enregistrer
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setEditingCategoryId(null)}
+                >
+                  Annuler
+                </Button>
+              </Stack>
+            </Box>
+          </Stack>
+        </StorefrontCard>
+      ) : null}
+
+      {editingProduct ? (
+        <StorefrontCard title="Modifier le produit" theme={theme}>
+          <Stack spacing={2.5}>
+            <SectionLead
+              title={editingProduct.name ?? 'Produit'}
+              description="Mets a jour les donnees catalogue, SEO, stock et publication."
+            />
+            <Box
+              component="form"
+              onSubmit={handleEditProductFormSubmit(handleProductEditSubmit)}
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              }}
+            >
+              <TextField
+                label="Nom du produit"
+                {...registerEditProduct('name', {
+                  required: 'Le nom du produit est requis.',
+                })}
+                error={Boolean(editProductFormErrors.name)}
+                helperText={editProductFormErrors.name?.message}
+                fullWidth
+              />
+              <TextField
+                label="Slug"
+                {...registerEditProduct('slug')}
+                helperText="Laisse vide pour le regénérer depuis le nom."
+                fullWidth
+              />
+              <TextField
+                label="Description"
+                {...registerEditProduct('description')}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <TextField
+                label="Image URL"
+                {...registerEditProduct('imageUrl')}
+                fullWidth
+              />
+              <TextField
+                label="Prix"
+                type="number"
+                inputProps={{ min: 0, step: 0.01 }}
+                {...registerEditProduct('price', {
+                  required: 'Le prix est requis.',
+                  validate: (value) => {
+                    const numericPrice = Number(value);
+
+                    if (!Number.isFinite(numericPrice)) {
+                      return 'Le prix doit etre un nombre.';
+                    }
+
+                    if (numericPrice < 0) {
+                      return 'Le prix doit etre positif.';
+                    }
+
+                    return true;
+                  },
+                })}
+                error={Boolean(editProductFormErrors.price)}
+                helperText={editProductFormErrors.price?.message}
+                fullWidth
+              />
+              <Controller
+                name="organizationId"
+                control={editProductControl}
+                rules={{
+                  required: 'Choisis une organisation.',
+                }}
+                render={({ field }) => (
+                  <TextField
+                    select
+                    label="Organisation"
+                    helperText={editProductFormErrors.organizationId?.message}
+                    error={Boolean(editProductFormErrors.organizationId)}
+                    fullWidth
+                    {...field}
+                  >
+                    <MenuItem value="">Choisir une organisation</MenuItem>
+                    {organizations.map((organization) => (
+                      <MenuItem key={organization.id} value={organization.id}>
+                        {organization.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+              <Controller
+                name="categoryId"
+                control={editProductControl}
+                rules={{
+                  required: 'Choisis une categorie.',
+                }}
+                render={({ field }) => (
+                  <TextField
+                    select
+                    label="Categorie"
+                    helperText={
+                      editProductFormErrors.categoryId?.message ??
+                      (editProductCategories.length === 0
+                        ? "Cree d'abord une categorie pour cette boutique."
+                        : 'La route categorie utilisera son slug.')
+                    }
+                    error={Boolean(editProductFormErrors.categoryId)}
+                    fullWidth
+                    {...field}
+                  >
+                    <MenuItem value="">Choisir une categorie</MenuItem>
+                    {editProductCategories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                <Controller
+                  name="inStock"
+                  control={editProductControl}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={field.value}
+                          onChange={(_, checked) => field.onChange(checked)}
+                        />
+                      }
+                      label="En stock"
+                    />
+                  )}
+                />
+                <Controller
+                  name="published"
+                  control={editProductControl}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={field.value}
+                          onChange={(_, checked) => field.onChange(checked)}
+                        />
+                      }
+                      label="Publie"
+                    />
+                  )}
+                />
+              </Stack>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={
+                    isEditProductSubmitting ||
+                    actionId === `product:${editingProduct.id}` ||
+                    editProductCategories.length === 0
+                  }
+                >
+                  Enregistrer
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setEditingProductId(null)}
+                >
+                  Annuler
+                </Button>
+              </Stack>
+            </Box>
+          </Stack>
+        </StorefrontCard>
+      ) : null}
+
       <Box
         sx={{
           display: 'grid',
@@ -870,6 +1462,10 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                 const organization = category.organizationId
                   ? organizationsById.get(category.organizationId)
                   : undefined;
+                const categoryHasProducts = products.some(
+                  (product) => product.categoryId === category.id
+                );
+                const isBusy = actionId === `category:${category.id}`;
 
                 return (
                   <Paper
@@ -903,6 +1499,37 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                       {category.description ? (
                         <Typography sx={{ color: theme.mutedTextColor }}>
                           {category.description}
+                        </Typography>
+                      ) : null}
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        <Button
+                          variant="outlined"
+                          disabled={isBusy}
+                          onClick={() => startCategoryEdit(category)}
+                        >
+                          Modifier
+                        </Button>
+                        <Button
+                          color="error"
+                          variant="outlined"
+                          disabled={categoryHasProducts || isBusy}
+                          onClick={() => void handleCategoryDelete(category)}
+                        >
+                          {isBusy ? 'Suppression...' : 'Supprimer'}
+                        </Button>
+                      </Stack>
+                      {categoryHasProducts ? (
+                        <Typography
+                          variant="caption"
+                          sx={{ color: theme.mutedTextColor }}
+                        >
+                          Supprime ou deplace les produits avant de supprimer la
+                          categorie.
                         </Typography>
                       ) : null}
                     </Stack>
@@ -944,6 +1571,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                 const category = product.categoryId
                   ? categoriesById.get(product.categoryId)
                   : undefined;
+                const isBusy = actionId === `product:${product.id}`;
 
                 return (
                   <Paper
@@ -1014,6 +1642,52 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
                           {product.description}
                         </Typography>
                       ) : null}
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        <Button
+                          variant="outlined"
+                          disabled={isBusy}
+                          onClick={() => startProductEdit(product)}
+                        >
+                          Modifier
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          disabled={isBusy}
+                          onClick={() =>
+                            void handleProductUpdate(product, {
+                              published: !product.published,
+                            })
+                          }
+                        >
+                          {product.published ? 'Depublier' : 'Publier'}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          disabled={isBusy}
+                          onClick={() =>
+                            void handleProductUpdate(product, {
+                              inStock: product.inStock === false,
+                            })
+                          }
+                        >
+                          {product.inStock === false
+                            ? 'Remettre en stock'
+                            : 'Marquer rupture'}
+                        </Button>
+                        <Button
+                          color="error"
+                          variant="outlined"
+                          disabled={isBusy}
+                          onClick={() => void handleProductDelete(product)}
+                        >
+                          {isBusy ? 'Action...' : 'Supprimer'}
+                        </Button>
+                      </Stack>
                     </Stack>
                   </Paper>
                 );

@@ -434,11 +434,7 @@ export function renderStorefrontRoutes({
         path="/admin/categories"
         element={
           <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <RoutePlaceholder
-              title="Admin Categories"
-              details="Gestion des categories"
-              theme={theme}
-            />
+            <AdminCatalog theme={theme} currency={currency} />
           </AdminGuard>
         }
       />
