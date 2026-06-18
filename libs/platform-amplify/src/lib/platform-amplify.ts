@@ -56,19 +56,18 @@ type PublicCategoryModel = Pick<
   'id' | 'name' | 'slug' | 'description' | 'organizationId'
 >;
 
-type PublicProductModel = Pick<
-  ProductModel,
-  | 'id'
-  | 'name'
-  | 'slug'
-  | 'description'
-  | 'price'
-  | 'currency'
-  | 'imageUrl'
-  | 'inStock'
-  | 'organizationId'
-  | 'categoryId'
->;
+type PublicProductModel = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  currency: string | null;
+  imageUrl: string | null;
+  inStock: boolean | null;
+  organizationId: string;
+  categoryId: string | null;
+};
 
 type OrganizationCreateInput = Pick<OrganizationModel, 'name' | 'slug'>;
 type CategoryCreateInput = {

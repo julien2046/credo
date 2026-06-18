@@ -1,6 +1,9 @@
-import type { PublicCategory, PublicProduct } from '@credo/data-access';
+import {
+  listPublicCatalog,
+  type PublicCategory,
+  type PublicProduct,
+} from '@credo/data-access';
 import { getDataClient } from '@credo/platform-amplify';
-import { getErrorMessage } from '@credo/shared';
 
 export type StorefrontCategoryContent = {
   id: string;
@@ -81,28 +84,7 @@ function toProductContent(
 
 async function loadCatalogContent() {
   const dataClient = getDataClient();
-  const [categoryResult, productResult] = await Promise.all([
-    dataClient.queries.listPublicCategories({ authMode: 'apiKey' }),
-    dataClient.queries.listPublicProducts({ authMode: 'apiKey' }),
-  ]);
-
-  const message = [
-    getErrorMessage(categoryResult?.errors),
-    getErrorMessage(productResult?.errors),
-  ]
-    .filter(Boolean)
-    .join(', ');
-
-  if (message) {
-    throw new Error(message);
-  }
-
-  const categories = Array.isArray(categoryResult?.data)
-    ? (categoryResult.data as PublicCategory[])
-    : [];
-  const products = Array.isArray(productResult?.data)
-    ? (productResult.data as PublicProduct[])
-    : [];
+  const { categories, products } = await listPublicCatalog(dataClient);
   const categoriesById = new Map(
     categories
       .filter((category) => category.id)
