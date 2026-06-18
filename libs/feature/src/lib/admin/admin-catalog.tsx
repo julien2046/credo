@@ -18,7 +18,12 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import type { Category, Organization, Product } from '@credo/data-access';
-import { getErrorMessage, type StorefrontTheme } from '@credo/shared';
+import {
+  formatPrice,
+  getErrorMessage,
+  normalizeSlug,
+  type StorefrontTheme,
+} from '@credo/shared';
 import { getDataClient } from '@credo/platform-amplify';
 import { InsetPanel, SectionLead, StorefrontCard } from '@credo/ui';
 
@@ -45,25 +50,6 @@ export type AdminCatalogProps = {
   theme: StorefrontTheme;
   currency: string;
 };
-
-function normalizeSlug(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function formatPrice(value: number | null, currency: string) {
-  if (value === null) return `0 ${currency}`;
-
-  return new Intl.NumberFormat('fr-CA', {
-    style: 'currency',
-    currency,
-  }).format(value);
-}
 
 /**
  * Backoffice catalogue v1 avec organisations, categories et produits publiables.

@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import type { StorefrontTheme } from '@credo/shared';
+import { formatPrice, type StorefrontTheme } from '@credo/shared';
 import { InsetPanel, SectionLead, StorefrontCard } from '@credo/ui';
 import { AdminCatalog } from '../admin/admin-catalog';
 import type { AuthState } from '../auth/auth.types';
@@ -42,13 +42,6 @@ export type RenderStorefrontRoutesProps = {
   signInNode: ReactNode;
   theme: StorefrontTheme;
 };
-
-function formatPrice(value: number, currency: string) {
-  return new Intl.NumberFormat('fr-CA', {
-    style: 'currency',
-    currency,
-  }).format(value);
-}
 
 function PublicLoadingCard({
   label,
