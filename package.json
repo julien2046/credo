@@ -2,7 +2,11 @@
   "name": "@credo/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev:storefront": "vite --config apps/storefront/vite.config.mts",
+    "dev:client-a": "CLIENT_ID=client-a THEME_ID=client-a npm run dev:storefront",
+    "dev:client-b": "CLIENT_ID=client-b THEME_ID=client-b npm run dev:storefront"
+  },
   "private": true,
   "devDependencies": {
     "@aws-amplify/backend": "^1.21.1",
