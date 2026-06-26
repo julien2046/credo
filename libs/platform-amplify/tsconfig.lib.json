@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
+    "lib": ["es2022", "dom"],
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,

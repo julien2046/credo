@@ -40,6 +40,9 @@ describe('validateOptionalImageUrl', () => {
     expect(validateOptionalImageUrl('')).toBe(true);
     expect(validateOptionalImageUrl('https://example.com/image.jpg')).toBe(true);
     expect(validateOptionalImageUrl('http://example.com/image.jpg')).toBe(true);
+    expect(
+      validateOptionalImageUrl('catalog/product-images/product-image.jpg')
+    ).toBe(true);
   });
 
   it('rejects invalid or unsupported image URLs', () => {
@@ -49,6 +52,9 @@ describe('validateOptionalImageUrl', () => {
     expect(validateOptionalImageUrl('ftp://example.com/image.jpg')).toBe(
       "L'URL de l'image doit commencer par http:// ou https://."
     );
+    expect(
+      validateOptionalImageUrl('catalog/product-images/image avec espace.jpg')
+    ).toBe("L'URL de l'image doit etre valide.");
   });
 });
 

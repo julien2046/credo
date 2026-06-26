@@ -43,6 +43,8 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     editProductCategories,
     editProductControl,
     editProductFormErrors,
+    editProductImageFileName,
+    editProductImageUploadProgress,
     editingCategory,
     editingProduct,
     error,
@@ -56,6 +58,8 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     handleProductDelete,
     handleProductEditSubmit,
     handleProductFormSubmit,
+    handleEditProductImageFileChange,
+    handleProductImageFileChange,
     handleProductSubmit,
     handleProductUpdate,
     isCategorySubmitting,
@@ -71,6 +75,8 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     productCategories,
     productControl,
     productFormErrors,
+    productImageFileName,
+    productImageUploadProgress,
     products,
     registerCategory,
     registerEditCategory,
@@ -136,7 +142,10 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
               categories={productCategories}
               control={productControl}
               errors={productFormErrors}
+              imageFileName={productImageFileName}
+              imageUploadProgress={productImageUploadProgress}
               isSubmitting={isProductSubmitting}
+              onImageFileChange={handleProductImageFileChange}
               onSubmit={handleProductFormSubmit(handleProductSubmit)}
               organizations={organizations}
               register={registerProduct}
@@ -188,8 +197,11 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
           control={editProductControl}
           editingProduct={editingProduct}
           errors={editProductFormErrors}
+          imageFileName={editProductImageFileName}
+          imageUploadProgress={editProductImageUploadProgress}
           isSubmitting={isEditProductSubmitting}
           onCancel={cancelProductEdit}
+          onImageFileChange={handleEditProductImageFileChange}
           onSubmit={handleEditProductFormSubmit(handleProductEditSubmit)}
           organizations={organizations}
           register={registerEditProduct}

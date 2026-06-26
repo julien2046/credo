@@ -1,3 +1,4 @@
+import { isCatalogProductImageStoragePath } from '@credo/platform-amplify';
 import { normalizeSlug } from '@credo/shared';
 
 export function validateTrimmedRequired(
@@ -21,6 +22,10 @@ export function validateOptionalImageUrl(value: string): true | string {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
+    return true;
+  }
+
+  if (isCatalogProductImageStoragePath(trimmedValue)) {
     return true;
   }
 

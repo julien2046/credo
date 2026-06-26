@@ -86,8 +86,11 @@ type ProductEditFormProps = {
   control: Control<ProductFormValues>;
   editingProduct: Product;
   errors: FieldErrors<ProductFormValues>;
+  imageFileName: string | null;
+  imageUploadProgress: number | null;
   isSubmitting: boolean;
   onCancel: () => void;
+  onImageFileChange: (file: File | null) => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
   organizations: Organization[];
   register: UseFormRegister<ProductFormValues>;
@@ -100,8 +103,11 @@ export function ProductEditForm({
   control,
   editingProduct,
   errors,
+  imageFileName,
+  imageUploadProgress,
   isSubmitting,
   onCancel,
+  onImageFileChange,
   onSubmit,
   organizations,
   register,
@@ -127,6 +133,9 @@ export function ProductEditForm({
             categories={categories}
             control={control}
             errors={errors}
+            imageFileName={imageFileName}
+            imageUploadProgress={imageUploadProgress}
+            onImageFileChange={onImageFileChange}
             organizations={organizations}
             register={register}
             showImagePlaceholder={false}

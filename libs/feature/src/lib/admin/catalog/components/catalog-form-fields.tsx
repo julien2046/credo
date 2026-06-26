@@ -5,11 +5,15 @@ import {
   type UseFormRegister,
 } from 'react-hook-form';
 import {
+  Button,
+  Chip,
   FormControlLabel,
+  LinearProgress,
   MenuItem,
   Stack,
   Switch,
   TextField,
+  Typography,
 } from '@mui/material';
 import type { Category, Organization } from '@credo/data-access';
 import type {
@@ -116,6 +120,9 @@ type ProductFormFieldsProps = {
   control: Control<ProductFormValues>;
   errors: FieldErrors<ProductFormValues>;
   organizations: Organization[];
+  imageFileName?: string | null;
+  imageUploadProgress?: number | null;
+  onImageFileChange?: (file: File | null) => void;
   register: UseFormRegister<ProductFormValues>;
   showImagePlaceholder?: boolean;
   showOrganizationHint?: boolean;
@@ -128,6 +135,9 @@ export function ProductFormFields({
   categories,
   control,
   errors,
+  imageFileName,
+  imageUploadProgress,
+  onImageFileChange,
   organizations,
   register,
   showImagePlaceholder = true,
@@ -166,15 +176,59 @@ export function ProductFormFields({
         fullWidth
       />
       <TextField
-        label="Image URL"
+        label="Image URL ou chemin Storage"
         {...register('imageUrl', {
           validate: validateOptionalImageUrl,
         })}
-        placeholder={showImagePlaceholder ? 'https://...' : undefined}
+        placeholder={
+          showImagePlaceholder
+            ? 'https://... ou catalog/product-images/...'
+            : undefined
+        }
         error={Boolean(errors.imageUrl)}
-        helperText={errors.imageUrl?.message}
+        helperText={
+          errors.imageUrl?.message ??
+          'Tu peux coller une URL externe ou choisir un fichier a uploader.'
+        }
         fullWidth
       />
+      {onImageFileChange ? (
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button component="label" variant="outlined">
+              Choisir une image
+              <input
+                hidden
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={(event) => {
+                  onImageFileChange(event.currentTarget.files?.[0] ?? null);
+                  event.currentTarget.value = '';
+                }}
+              />
+            </Button>
+            {imageFileName ? (
+              <Chip
+                label={imageFileName}
+                onDelete={() => onImageFileChange(null)}
+                variant="outlined"
+              />
+            ) : null}
+          </Stack>
+          {imageUploadProgress !== null &&
+          imageUploadProgress !== undefined ? (
+            <Stack spacing={0.75}>
+              <LinearProgress
+                variant="determinate"
+                value={imageUploadProgress}
+              />
+              <Typography variant="caption">
+                Upload image: {imageUploadProgress}%
+              </Typography>
+            </Stack>
+          ) : null}
+        </Stack>
+      ) : null}
       <TextField
         label="Prix"
         type="number"

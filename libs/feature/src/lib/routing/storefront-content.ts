@@ -3,7 +3,7 @@ import {
   type PublicCategory,
   type PublicProduct,
 } from '@credo/data-access';
-import { getDataClient } from '@credo/platform-amplify';
+import { getDataClient, resolveCatalogImageUrl } from '@credo/platform-amplify';
 
 export type StorefrontCategoryContent = {
   id: string;
@@ -59,10 +59,20 @@ function toCategoryContent(
   };
 }
 
-function toProductContent(
+async function resolveProductImageUrl(
+  imageReference: string | null | undefined
+): Promise<string | null> {
+  try {
+    return await resolveCatalogImageUrl(imageReference);
+  } catch {
+    return null;
+  }
+}
+
+async function toProductContent(
   product: PublicProduct | null | undefined,
   category: PublicCategory | null | undefined
-): StorefrontProductContent | null {
+): Promise<StorefrontProductContent | null> {
   if (!product?.id || !product.name || !product.slug) {
     return null;
   }
@@ -75,7 +85,7 @@ function toProductContent(
       product.description ??
       `Fiche produit ${product.name} prete pour le storefront public.`,
     categorySlug: category?.slug ?? null,
-    imageUrl: product.imageUrl ?? null,
+    imageUrl: await resolveProductImageUrl(product.imageUrl),
     price: product.price,
     currency: product.currency ?? 'EUR',
     inStock: product.inStock !== false,
@@ -114,14 +124,17 @@ export async function getCategoryContentBySlug(
 
   return {
     category: categoryContent,
-    products: products
-      .filter((product) => product.categoryId === category.id)
-      .map((product) =>
-        toProductContent(product, categoriesById.get(category.id))
+    products: (
+      await Promise.all(
+        products
+          .filter((product) => product.categoryId === category.id)
+          .map((product) =>
+            toProductContent(product, categoriesById.get(category.id))
+          )
       )
-      .filter((product): product is StorefrontProductContent =>
-        Boolean(product)
-      ),
+    ).filter((product): product is StorefrontProductContent =>
+      Boolean(product)
+    ),
   };
 }
 
@@ -136,7 +149,7 @@ export async function getProductContentBySlug(
   const { products, categoriesById } = await loadCatalogContent();
   const product = products.find((item) => item.slug === slug);
 
-  return toProductContent(
+  return await toProductContent(
     product,
     product?.categoryId ? categoriesById.get(product.categoryId) : null
   );
@@ -167,13 +180,16 @@ export async function listPrerenderableStorefrontRoutes(): Promise<string[]> {
         Boolean(category)
       )
       .map((category) => `/c/${category.slug}`),
-    ...products
-      .map((product) =>
-        toProductContent(
-          product,
-          product.categoryId ? categoriesById.get(product.categoryId) : null
+    ...(
+      await Promise.all(
+        products.map((product) =>
+          toProductContent(
+            product,
+            product.categoryId ? categoriesById.get(product.categoryId) : null
+          )
         )
       )
+    )
       .filter((product): product is StorefrontProductContent =>
         Boolean(product)
       )

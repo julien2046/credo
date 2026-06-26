@@ -1,5 +1,6 @@
 import { Amplify } from 'aws-amplify';
 import { generateClient } from 'aws-amplify/data';
+import { getUrl, uploadData } from 'aws-amplify/storage';
 
 type AmplifyConfigInput = Parameters<typeof Amplify.configure>[0];
 type GraphQLErrors = Array<{ message?: string }> | undefined;
@@ -148,6 +149,18 @@ export type DataClient = {
 let isConfigured = false;
 let dataClientInstance: DataClient | null = null;
 
+export const catalogProductImageStoragePrefix = 'catalog/product-images';
+
+type StorageUploadDataInput = Parameters<typeof uploadData>[0];
+type StorageUploadDataPayload = StorageUploadDataInput['data'];
+
+export type UploadCatalogProductImageInput = {
+  contentType?: string;
+  data: StorageUploadDataPayload;
+  fileName: string;
+  onProgress?: (percent: number) => void;
+};
+
 export function configureAmplify(config: AmplifyConfigInput) {
   if (isConfigured) return;
 
@@ -166,4 +179,92 @@ export function getDataClient(): DataClient {
   }
 
   return dataClientInstance;
+}
+
+function sanitizeStorageFileName(fileName: string): string {
+  const normalizedFileName = fileName
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9.]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return normalizedFileName || 'product-image';
+}
+
+function createStorageId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? String(Date.now());
+}
+
+export function isCatalogProductImageStoragePath(value: string): boolean {
+  const expectedPrefix = `${catalogProductImageStoragePrefix}/`;
+
+  return (
+    value.startsWith(expectedPrefix) &&
+    value.length > expectedPrefix.length &&
+    !/\s/.test(value)
+  );
+}
+
+export function createCatalogProductImageStoragePath(fileName: string): string {
+  return `${catalogProductImageStoragePrefix}/${createStorageId()}-${sanitizeStorageFileName(
+    fileName
+  )}`;
+}
+
+export async function uploadCatalogProductImage({
+  contentType,
+  data,
+  fileName,
+  onProgress,
+}: UploadCatalogProductImageInput): Promise<string> {
+  const path = createCatalogProductImageStoragePath(fileName);
+
+  await uploadData({
+    path,
+    data,
+    options: {
+      contentType,
+      preventOverwrite: true,
+      onProgress: ({ transferredBytes, totalBytes }) => {
+        if (!onProgress || !totalBytes) return;
+
+        onProgress(Math.round((transferredBytes / totalBytes) * 100));
+      },
+    },
+  }).result;
+
+  onProgress?.(100);
+
+  return path;
+}
+
+export async function resolveStorageUrl(path: string): Promise<string> {
+  const result = await getUrl({
+    path,
+    options: {
+      expiresIn: 3600,
+    },
+  });
+
+  return result.url.toString();
+}
+
+export async function resolveCatalogImageUrl(
+  imageReference: string | null | undefined
+): Promise<string | null> {
+  if (!imageReference) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(imageReference)) {
+    return imageReference;
+  }
+
+  if (isCatalogProductImageStoragePath(imageReference)) {
+    return resolveStorageUrl(imageReference);
+  }
+
+  return null;
 }

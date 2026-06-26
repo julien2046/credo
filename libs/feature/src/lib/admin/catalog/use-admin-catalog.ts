@@ -12,7 +12,10 @@ import {
   updateCategory,
   updateProduct,
 } from '@credo/data-access';
-import { getDataClient } from '@credo/platform-amplify';
+import {
+  getDataClient,
+  uploadCatalogProductImage,
+} from '@credo/platform-amplify';
 import { normalizeSlug } from '@credo/shared';
 import {
   categoryContainsProducts,
@@ -64,6 +67,13 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
   const [organizationSlug, setOrganizationSlug] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [productImageFile, setProductImageFile] = useState<File | null>(null);
+  const [productImageUploadProgress, setProductImageUploadProgress] =
+    useState<number | null>(null);
+  const [editProductImageFile, setEditProductImageFile] =
+    useState<File | null>(null);
+  const [editProductImageUploadProgress, setEditProductImageUploadProgress] =
+    useState<number | null>(null);
   const [isOrganizationSubmitting, setIsOrganizationSubmitting] =
     useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
@@ -366,6 +376,48 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     }
   };
 
+  const handleProductImageFileChange = (file: File | null) => {
+    setProductImageFile(file);
+    setProductImageUploadProgress(null);
+
+    if (file) {
+      setProductValue('imageUrl', '', {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+  };
+
+  const handleEditProductImageFileChange = (file: File | null) => {
+    setEditProductImageFile(file);
+    setEditProductImageUploadProgress(null);
+
+    if (file) {
+      setEditProductValue('imageUrl', '', {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+  };
+
+  const uploadSelectedProductImage = async (
+    file: File | null,
+    onProgress: (progress: number | null) => void
+  ): Promise<string | null> => {
+    if (!file) {
+      return null;
+    }
+
+    onProgress(0);
+
+    return uploadCatalogProductImage({
+      contentType: file.type || undefined,
+      data: file,
+      fileName: file.name,
+      onProgress,
+    });
+  };
+
   /**
    * Cree une categorie rattachee a une organisation.
    */
@@ -456,6 +508,12 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     setError(null);
 
     try {
+      const uploadedImagePath = await uploadSelectedProductImage(
+        productImageFile,
+        setProductImageUploadProgress
+      );
+      const imageReference = uploadedImagePath ?? imageUrl;
+
       await createProduct(dataClient, {
         name,
         slug,
@@ -466,9 +524,11 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
         inStock: values.inStock,
         published: values.published,
         ...(description ? { description } : {}),
-        ...(imageUrl ? { imageUrl } : {}),
+        ...(imageReference ? { imageUrl: imageReference } : {}),
       });
 
+      setProductImageFile(null);
+      setProductImageUploadProgress(null);
       resetProduct({
         name: '',
         slug: '',
@@ -500,6 +560,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
   const startProductEdit = (product: Product) => {
     setEditingCategoryId(null);
     setEditingProductId(product.id);
+    setEditProductImageFile(null);
+    setEditProductImageUploadProgress(null);
     resetEditProduct({
       name: product.name ?? '',
       slug: product.slug ?? '',
@@ -519,6 +581,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
 
   const cancelProductEdit = () => {
     setEditingProductId(null);
+    setEditProductImageFile(null);
+    setEditProductImageUploadProgress(null);
   };
 
   const handleCategoryEditSubmit = async (values: CategoryFormValues) => {
@@ -626,12 +690,18 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     setError(null);
 
     try {
+      const uploadedImagePath = await uploadSelectedProductImage(
+        editProductImageFile,
+        setEditProductImageUploadProgress
+      );
+      const imageReference = uploadedImagePath ?? imageUrl;
+
       await updateProduct(dataClient, {
         id: editingProduct.id,
         name,
         slug,
         description: description || null,
-        imageUrl: imageUrl || null,
+        imageUrl: imageReference || null,
         price,
         currency,
         organizationId: values.organizationId,
@@ -641,6 +711,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
       });
 
       setEditingProductId(null);
+      setEditProductImageFile(null);
+      setEditProductImageUploadProgress(null);
       await loadData();
     } catch (err) {
       setError(getErrorMessage(err, 'Unable to update product'));
@@ -749,6 +821,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     editProductCategories,
     editProductControl,
     editProductFormErrors,
+    editProductImageFileName: editProductImageFile?.name ?? null,
+    editProductImageUploadProgress,
     editingCategory,
     editingProduct,
     error,
@@ -762,6 +836,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     handleProductDelete,
     handleProductEditSubmit,
     handleProductFormSubmit,
+    handleEditProductImageFileChange,
+    handleProductImageFileChange,
     handleProductSubmit,
     handleProductUpdate,
     isCategorySubmitting,
@@ -777,6 +853,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     productCategories,
     productControl,
     productFormErrors,
+    productImageFileName: productImageFile?.name ?? null,
+    productImageUploadProgress,
     products,
     registerCategory,
     registerEditCategory,

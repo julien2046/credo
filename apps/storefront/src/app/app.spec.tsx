@@ -35,6 +35,17 @@ vi.mock('aws-amplify/data', () => ({
   }),
 }));
 
+vi.mock('aws-amplify/storage', () => ({
+  getUrl: vi.fn().mockResolvedValue({
+    url: new URL('https://assets.example.com/product.jpg'),
+  }),
+  uploadData: vi.fn(() => ({
+    result: Promise.resolve({
+      path: 'catalog/product-images/product.jpg',
+    }),
+  })),
+}));
+
 vi.mock('aws-amplify/auth', () => ({
   getCurrentUser: vi.fn().mockResolvedValue({
     username: 'merchant@example.com',

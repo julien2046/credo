@@ -140,7 +140,10 @@ type ProductCreateFormProps = {
   categories: Category[];
   control: Control<ProductFormValues>;
   errors: FieldErrors<ProductFormValues>;
+  imageFileName: string | null;
+  imageUploadProgress: number | null;
   isSubmitting: boolean;
+  onImageFileChange: (file: File | null) => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
   organizations: Organization[];
   register: UseFormRegister<ProductFormValues>;
@@ -153,7 +156,10 @@ export function ProductCreateForm({
   categories,
   control,
   errors,
+  imageFileName,
+  imageUploadProgress,
   isSubmitting,
+  onImageFileChange,
   onSubmit,
   organizations,
   register,
@@ -177,6 +183,9 @@ export function ProductCreateForm({
             categories={categories}
             control={control}
             errors={errors}
+            imageFileName={imageFileName}
+            imageUploadProgress={imageUploadProgress}
+            onImageFileChange={onImageFileChange}
             organizations={organizations}
             register={register}
           />
