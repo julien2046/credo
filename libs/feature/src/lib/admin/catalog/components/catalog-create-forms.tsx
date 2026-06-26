@@ -11,6 +11,7 @@ import type {
 import { CategoryFormFields, ProductFormFields } from './catalog-form-fields';
 
 type OrganizationCreateFormProps = {
+  isSubmitting: boolean;
   name: string;
   onNameChange: (value: string) => void;
   onSlugChange: (value: string) => void;
@@ -20,6 +21,7 @@ type OrganizationCreateFormProps = {
 };
 
 export function OrganizationCreateForm({
+  isSubmitting,
   name,
   onNameChange,
   onSlugChange,
@@ -55,6 +57,7 @@ export function OrganizationCreateForm({
           />
           <Button
             type="submit"
+            disabled={isSubmitting || !name.trim()}
             variant="contained"
             size="large"
             sx={{
@@ -63,7 +66,7 @@ export function OrganizationCreateForm({
               fontWeight: 700,
             }}
           >
-            Creer l'organisation
+            {isSubmitting ? 'Creation...' : "Creer l'organisation"}
           </Button>
         </Box>
       </Stack>

@@ -14,6 +14,16 @@ import {
 } from '@credo/data-access';
 import { getDataClient } from '@credo/platform-amplify';
 import { normalizeSlug } from '@credo/shared';
+import {
+  categoryContainsProducts,
+  getCategoryMoveBlocker,
+  getProductCategoryBlocker,
+  getProductPublishBlocker,
+  hasDuplicateCategorySlug,
+  hasDuplicateOrganizationSlug,
+  hasDuplicateProductSlug,
+} from './catalog-rules';
+import { parseCatalogPrice } from './catalog-validation';
 
 export type CategoryFormValues = {
   name: string;
@@ -54,6 +64,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
   const [organizationSlug, setOrganizationSlug] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [isOrganizationSubmitting, setIsOrganizationSubmitting] =
+    useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
     null
   );
@@ -317,14 +329,26 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
 
     const name = organizationName.trim();
     const slug = normalizeSlug(organizationSlug || organizationName);
-    if (!name || !slug) return;
 
-    if (organizations.some((organization) => organization.slug === slug)) {
+    if (!name) {
+      setError("Le nom de l'organisation est requis.");
+      return;
+    }
+
+    if (!slug) {
+      setError(
+        "Le slug de l'organisation doit contenir au moins une lettre ou un chiffre."
+      );
+      return;
+    }
+
+    if (hasDuplicateOrganizationSlug(organizations, { slug })) {
       setError(`Le slug organisation "${slug}" existe deja.`);
       return;
     }
 
     setError(null);
+    setIsOrganizationSubmitting(true);
 
     try {
       await createOrganization(dataClient, {
@@ -337,6 +361,8 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
       await loadData();
     } catch (err) {
       setError(getErrorMessage(err, 'Unable to save organization'));
+    } finally {
+      setIsOrganizationSubmitting(false);
     }
   };
 
@@ -348,14 +374,18 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     const slug = normalizeSlug(values.slug || values.name);
     const description = values.description.trim();
 
-    if (!name || !slug || !values.organizationId) return;
+    if (!name || !slug || !values.organizationId) {
+      setError(
+        'Complete le nom, le slug et la boutique avant de creer la categorie.'
+      );
+      return;
+    }
 
     if (
-      categories.some(
-        (category) =>
-          category.organizationId === values.organizationId &&
-          category.slug === slug
-      )
+      hasDuplicateCategorySlug(categories, {
+        organizationId: values.organizationId,
+        slug,
+      })
     ) {
       setError(`Le slug categorie "${slug}" existe deja pour cette boutique.`);
       return;
@@ -391,19 +421,34 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     const slug = normalizeSlug(values.slug || values.name);
     const description = values.description.trim();
     const imageUrl = values.imageUrl.trim();
-    const price = Number(values.price);
+    const price = parseCatalogPrice(values.price);
 
     if (
       !name ||
       !slug ||
       !values.organizationId ||
       !values.categoryId ||
-      !Number.isFinite(price)
+      !Number.isFinite(price) ||
+      price < 0
     ) {
+      setError(
+        'Complete le nom, le slug, le prix, la boutique et la categorie avant de creer le produit.'
+      );
       return;
     }
 
-    if (products.some((product) => product.slug === slug)) {
+    const categoryBlocker = getProductCategoryBlocker(
+      categories,
+      values.categoryId,
+      values.organizationId
+    );
+
+    if (categoryBlocker) {
+      setError(categoryBlocker);
+      return;
+    }
+
+    if (hasDuplicateProductSlug(products, { slug })) {
       setError(`Le slug produit "${slug}" existe deja.`);
       return;
     }
@@ -483,17 +528,32 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     const slug = normalizeSlug(values.slug || values.name);
     const description = values.description.trim();
 
-    if (!name || !slug || !values.organizationId) return;
+    if (!name || !slug || !values.organizationId) {
+      setError(
+        'Complete le nom, le slug et la boutique avant de modifier la categorie.'
+      );
+      return;
+    }
 
     if (
-      categories.some(
-        (category) =>
-          category.id !== editingCategory.id &&
-          category.organizationId === values.organizationId &&
-          category.slug === slug
-      )
+      hasDuplicateCategorySlug(categories, {
+        excludeId: editingCategory.id,
+        organizationId: values.organizationId,
+        slug,
+      })
     ) {
       setError(`Le slug categorie "${slug}" existe deja pour cette boutique.`);
+      return;
+    }
+
+    const categoryMoveBlocker = getCategoryMoveBlocker(
+      editingCategory,
+      products,
+      values.organizationId
+    );
+
+    if (categoryMoveBlocker) {
+      setError(categoryMoveBlocker);
       return;
     }
 
@@ -525,22 +585,38 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     const slug = normalizeSlug(values.slug || values.name);
     const description = values.description.trim();
     const imageUrl = values.imageUrl.trim();
-    const price = Number(values.price);
+    const price = parseCatalogPrice(values.price);
 
     if (
       !name ||
       !slug ||
       !values.organizationId ||
       !values.categoryId ||
-      !Number.isFinite(price)
+      !Number.isFinite(price) ||
+      price < 0
     ) {
+      setError(
+        'Complete le nom, le slug, le prix, la boutique et la categorie avant de modifier le produit.'
+      );
+      return;
+    }
+
+    const categoryBlocker = getProductCategoryBlocker(
+      categories,
+      values.categoryId,
+      values.organizationId
+    );
+
+    if (categoryBlocker) {
+      setError(categoryBlocker);
       return;
     }
 
     if (
-      products.some(
-        (product) => product.id !== editingProduct.id && product.slug === slug
-      )
+      hasDuplicateProductSlug(products, {
+        excludeId: editingProduct.id,
+        slug,
+      })
     ) {
       setError(`Le slug produit "${slug}" existe deja.`);
       return;
@@ -579,6 +655,15 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
   ) => {
     if (!product.id) return;
 
+    if (patch.published === true) {
+      const publishBlocker = getProductPublishBlocker(product, categories);
+
+      if (publishBlocker) {
+        setError(publishBlocker);
+        return;
+      }
+    }
+
     setActionId(`product:${product.id}`);
     setError(null);
 
@@ -607,6 +692,10 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
         id: product.id,
       });
 
+      if (editingProductId === product.id) {
+        setEditingProductId(null);
+      }
+
       await loadData();
     } catch (err) {
       setError(getErrorMessage(err, 'Unable to delete product'));
@@ -618,9 +707,7 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
   const handleCategoryDelete = async (category: Category) => {
     if (!category.id) return;
 
-    const hasProducts = products.some(
-      (product) => product.categoryId === category.id
-    );
+    const hasProducts = categoryContainsProducts(products, category.id);
 
     if (hasProducts) {
       setError(
@@ -636,6 +723,10 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
       await deleteCategory(dataClient, {
         id: category.id,
       });
+
+      if (editingCategoryId === category.id) {
+        setEditingCategoryId(null);
+      }
 
       await loadData();
     } catch (err) {
@@ -676,6 +767,7 @@ export function useAdminCatalog({ currency }: UseAdminCatalogOptions) {
     isCategorySubmitting,
     isEditCategorySubmitting,
     isEditProductSubmitting,
+    isOrganizationSubmitting,
     isProductSubmitting,
     loading,
     organizationName,

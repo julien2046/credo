@@ -16,7 +16,12 @@ import type {
   CategoryFormValues,
   ProductFormValues,
 } from '../use-admin-catalog';
-import { validateCatalogPrice } from '../catalog-validation';
+import {
+  validateCatalogPrice,
+  validateOptionalCatalogSlug,
+  validateOptionalImageUrl,
+  validateTrimmedRequired,
+} from '../catalog-validation';
 
 type CategoryFormFieldsProps = {
   control: Control<CategoryFormValues>;
@@ -44,6 +49,11 @@ export function CategoryFormFields({
         label="Nom de la categorie"
         {...register('name', {
           required: 'Le nom de la categorie est requis.',
+          validate: (value) =>
+            validateTrimmedRequired(
+              value,
+              'Le nom de la categorie est requis.'
+            ),
         })}
         error={Boolean(errors.name)}
         helperText={errors.name?.message}
@@ -51,9 +61,12 @@ export function CategoryFormFields({
       />
       <TextField
         label="Slug"
-        {...register('slug')}
+        {...register('slug', {
+          validate: validateOptionalCatalogSlug,
+        })}
         placeholder={showSlugPlaceholder ? 'nouveautes' : undefined}
-        helperText={slugHelperText}
+        error={Boolean(errors.slug)}
+        helperText={errors.slug?.message ?? slugHelperText}
         fullWidth
       />
       <TextField
@@ -128,6 +141,8 @@ export function ProductFormFields({
         label="Nom du produit"
         {...register('name', {
           required: 'Le nom du produit est requis.',
+          validate: (value) =>
+            validateTrimmedRequired(value, 'Le nom du produit est requis.'),
         })}
         error={Boolean(errors.name)}
         helperText={errors.name?.message}
@@ -135,9 +150,12 @@ export function ProductFormFields({
       />
       <TextField
         label="Slug"
-        {...register('slug')}
+        {...register('slug', {
+          validate: validateOptionalCatalogSlug,
+        })}
         placeholder={showSlugPlaceholder ? 'produit-vedette' : undefined}
-        helperText={slugHelperText}
+        error={Boolean(errors.slug)}
+        helperText={errors.slug?.message ?? slugHelperText}
         fullWidth
       />
       <TextField
@@ -149,8 +167,12 @@ export function ProductFormFields({
       />
       <TextField
         label="Image URL"
-        {...register('imageUrl')}
+        {...register('imageUrl', {
+          validate: validateOptionalImageUrl,
+        })}
         placeholder={showImagePlaceholder ? 'https://...' : undefined}
+        error={Boolean(errors.imageUrl)}
+        helperText={errors.imageUrl?.message}
         fullWidth
       />
       <TextField

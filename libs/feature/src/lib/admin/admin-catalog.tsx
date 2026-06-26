@@ -61,6 +61,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
     isCategorySubmitting,
     isEditCategorySubmitting,
     isEditProductSubmitting,
+    isOrganizationSubmitting,
     isProductSubmitting,
     loading,
     organizationName,
@@ -114,6 +115,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
           >
             <OrganizationCreateForm
               name={organizationName}
+              isSubmitting={isOrganizationSubmitting}
               onNameChange={setOrganizationName}
               onSlugChange={setOrganizationSlug}
               onSubmit={handleOrganizationSubmit}
