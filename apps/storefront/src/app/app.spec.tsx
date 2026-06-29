@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { clientConfigClientA } from '@credo/client-config-client-a';
 import { clientATheme } from '@credo/themes-client-a';
 import { vi } from 'vitest';

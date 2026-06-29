@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "dev:storefront": "vite --config apps/storefront/vite.config.mts",
+    "build:storefront": "react-router build apps/storefront",
+    "prerender:storefront": "tsx apps/storefront/scripts/prerender-storefront.ts",
+    "build:storefront:ssg": "npm run build:storefront && npm run prerender:storefront",
+    "dev:storefront": "react-router dev apps/storefront --host localhost --port 4200",
     "dev:client-a": "CLIENT_ID=client-a THEME_ID=client-a npm run dev:storefront",
     "dev:client-b": "CLIENT_ID=client-b THEME_ID=client-b npm run dev:storefront"
   },
@@ -22,6 +25,8 @@
     "@nx/vite": "22.5.0",
     "@nx/vitest": "22.5.0",
     "@nx/web": "22.5.0",
+    "@react-router/dev": "8.0.1",
+    "@react-router/node": "^8.0.1",
     "@swc-node/register": "1.11.1",
     "@swc/cli": "~0.8.0",
     "@swc/core": "1.15.8",
@@ -71,7 +76,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.72.0",
-    "react-router-dom": "6.30.3",
+    "react-router": "8.0.1",
     "zustand": "^5.0.12"
   }
 }

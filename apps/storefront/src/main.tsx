@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import * as ReactDOM from 'react-dom/client';
 import { configureAmplify } from '@credo/platform-amplify';
 import outputs from '../../../amplify_outputs.json';

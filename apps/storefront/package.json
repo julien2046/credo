@@ -1,5 +1,13 @@
 {
   "name": "@credo/storefront",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "react-router": "8.0.1"
+  },
+  "devDependencies": {
+    "@react-router/dev": "8.0.1",
+    "@react-router/node": "8.0.1"
+  }
 }

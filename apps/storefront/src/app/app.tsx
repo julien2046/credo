@@ -1,7 +1,7 @@
 import {
   Routes,
   useLocation,
-} from 'react-router-dom';
+} from 'react-router';
 import {
   Box,
   Button,

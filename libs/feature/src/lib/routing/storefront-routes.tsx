@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Link as RouterLink, Route, useParams } from 'react-router-dom';
+import { Link as RouterLink, Route, useParams } from 'react-router';
 import {
   Alert,
   Box,
