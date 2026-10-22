@@ -43,16 +43,25 @@
       "path": "../../libs/client-config/client-b/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/shared/tsconfig.lib.json"
+      "path": "../../libs/ui/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/platform-amplify/tsconfig.lib.json"
+      "path": "../../libs/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/tsconfig.lib.json"
     },
     {
       "path": "../../libs/themes/client-a/tsconfig.lib.json"
     },
     {
       "path": "../../libs/client-config/client-a/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/platform-amplify/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/data-access/tsconfig.lib.json"
     }
   ]
 }

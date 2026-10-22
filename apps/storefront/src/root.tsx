@@ -22,3 +22,7 @@ export function Layout({ children }: { children: ReactNode }) {
 export default function Root() {
   return <Outlet />;
 }
+
+export function HydrateFallback() {
+  return <p role="status">Chargement de la boutique...</p>;
+}

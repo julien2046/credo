@@ -1,5 +1,6 @@
 import {
-  Routes,
+  Outlet,
+  useNavigation,
   useLocation,
 } from 'react-router';
 import {
@@ -19,7 +20,6 @@ import type {
 } from '@credo/shared';
 import {
   AuthCard,
-  renderStorefrontRoutes,
   useStorefrontAuth,
 } from '@credo/feature';
 import { MetricTile, NavigationGroup, StorefrontCard } from '@credo/ui';
@@ -35,6 +35,7 @@ export function App({
   theme: StorefrontTheme;
 }) {
   const location = useLocation();
+  const navigation = useNavigation();
   const {
     auth,
     authMode,
@@ -305,14 +306,19 @@ export function App({
                   </Stack>
                 </StorefrontCard>
 
-                <Routes>
-                  {renderStorefrontRoutes({
-                    auth,
-                    currency: clientConfig.currency,
-                    signInNode,
-                    theme,
-                  })}
-                </Routes>
+                <Box aria-busy={navigation.state === 'loading'}>
+                  {navigation.state === 'loading' ? (
+                    <Typography role="status">Chargement...</Typography>
+                  ) : null}
+                  <Outlet
+                    context={{
+                      auth,
+                      currency: clientConfig.currency,
+                      signInNode,
+                      theme,
+                    }}
+                  />
+                </Box>
               </Stack>
 
               <Stack spacing={3}>

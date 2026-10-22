@@ -7,3 +7,6 @@ export * from './lib/routing/route-placeholder';
 export * from './lib/routing/server-route-page';
 export * from './lib/routing/storefront-content';
 export * from './lib/routing/storefront-routes';
+export * from './lib/catalog/category-page';
+export * from './lib/catalog/product-page';
+export * from './lib/routing/storefront-content-loaders';

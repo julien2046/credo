@@ -1,11 +1,5 @@
-import { configureAmplify } from '@credo/platform-amplify';
-import outputs from '../../../../amplify_outputs.json';
 import App from '../app/app';
-import { resolveStorefrontBootstrap } from '../app/storefront-bootstrap';
-
-configureAmplify(outputs);
-
-const storefront = resolveStorefrontBootstrap();
+import { storefront } from '../app/storefront-runtime';
 
 export default function StorefrontShellRoute() {
   return (
