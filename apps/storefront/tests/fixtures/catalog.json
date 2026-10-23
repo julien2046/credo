@@ -1,0 +1,9 @@
+{
+  "categories": [
+    { "id": "category-test", "name": "Mobilier de test", "slug": "mobilier-test", "description": "Une categorie pour verifier le prerendu.", "organizationId": "test" }
+  ],
+  "products": [
+    { "id": "product-test", "name": "Chaise de test", "slug": "chaise-test", "description": "Description presente dans le HTML statique.", "price": 49.9, "currency": "CAD", "imageUrl": null, "inStock": true, "organizationId": "test", "categoryId": "category-test", "published": true },
+    { "id": "draft-test", "name": "Brouillon", "slug": "brouillon-test", "description": "Ne doit pas etre genere.", "price": 10, "currency": "CAD", "imageUrl": null, "inStock": true, "organizationId": "test", "categoryId": "category-test", "published": false }
+  ]
+}

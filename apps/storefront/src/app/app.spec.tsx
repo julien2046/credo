@@ -25,8 +25,8 @@ const catalog = vi.hoisted(() => ({
 vi.mock('aws-amplify/data', () => ({
   generateClient: () => ({
     queries: {
-      listPublicCategories: catalog.categories,
-      listPublicProducts: catalog.products,
+      listPublicCategoryPage: catalog.categories,
+      listPublicProductPage: catalog.products,
     },
     models: {
       Organization: {
@@ -104,22 +104,28 @@ function renderRoute(path: string) {
 
 beforeEach(() => {
   catalog.categories.mockResolvedValue({
-    data: [
-      { id: 'c1', name: 'Mobilier', slug: 'mobilier', organizationId: 'o1' },
-    ],
+    data: {
+      items: [
+        { id: 'c1', name: 'Mobilier', slug: 'mobilier', organizationId: 'o1' },
+      ],
+      nextToken: null,
+    },
   });
   catalog.products.mockResolvedValue({
-    data: [
-      {
-        id: 'p1',
-        name: 'Chaise verte',
-        slug: 'chaise-verte',
-        price: 25,
-        currency: 'CAD',
-        categoryId: 'c1',
-        inStock: true,
-      },
-    ],
+    data: {
+      items: [
+        {
+          id: 'p1',
+          name: 'Chaise verte',
+          slug: 'chaise-verte',
+          price: 25,
+          currency: 'CAD',
+          categoryId: 'c1',
+          inStock: true,
+        },
+      ],
+      nextToken: null,
+    },
   });
   vi.mocked(getCurrentUser).mockResolvedValue({
     username: 'merchant@example.com',
@@ -157,7 +163,10 @@ describe('App', () => {
     expect(
       await screen.findByRole('heading', { name: 'Chaise verte' })
     ).toBeTruthy();
-    expect(catalog.products).toHaveBeenCalledWith({ authMode: 'apiKey' });
+    expect(catalog.products).toHaveBeenCalledWith(
+      { nextToken: null },
+      { authMode: 'apiKey' }
+    );
     await act(() => router.navigate('/c/mobilier'));
     expect(
       await screen.findByRole('heading', { name: 'Mobilier' })

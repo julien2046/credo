@@ -1,6 +1,6 @@
 import { util } from '@aws-appsync/utils';
 
-export function request() {
+export function request(ctx) {
   return {
     operation: 'Scan',
     filter: {
@@ -10,6 +10,7 @@ export function request() {
       },
     },
     limit: 200,
+    nextToken: ctx.args.nextToken ?? null,
   };
 }
 
@@ -18,7 +19,7 @@ export function response(ctx) {
     util.error(ctx.error.message, ctx.error.type);
   }
 
-  return (ctx.result.items ?? [])
+  const items = (ctx.result.items ?? [])
     .filter((category) => category.id && category.name && category.slug)
     .map((category) => ({
       id: category.id,
@@ -27,4 +28,8 @@ export function response(ctx) {
       description: category.description ?? null,
       organizationId: category.organizationId,
     }));
+
+  return ctx.info.fieldName === 'listPublicCategoryPage'
+    ? { items, nextToken: ctx.result.nextToken ?? null }
+    : items;
 }

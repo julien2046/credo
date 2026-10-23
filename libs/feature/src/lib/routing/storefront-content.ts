@@ -2,8 +2,21 @@ import {
   listPublicCatalog,
   type PublicCategory,
   type PublicProduct,
+  type PublicCatalogSnapshot,
 } from '@credo/data-access';
 import { getDataClient, resolveCatalogImageUrl } from '@credo/platform-amplify';
+
+export type StorefrontContentSource = {
+  loadCatalog: () => Promise<PublicCatalogSnapshot>;
+  resolveImage: (
+    reference: string | null | undefined
+  ) => Promise<string | null>;
+};
+
+const liveSource: StorefrontContentSource = {
+  loadCatalog: () => listPublicCatalog(getDataClient()),
+  resolveImage: resolveProductImageUrl,
+};
 
 export type StorefrontCategoryContent = {
   id: string;
@@ -71,7 +84,8 @@ async function resolveProductImageUrl(
 
 async function toProductContent(
   product: PublicProduct | null | undefined,
-  category: PublicCategory | null | undefined
+  category: PublicCategory | null | undefined,
+  source: StorefrontContentSource
 ): Promise<StorefrontProductContent | null> {
   if (!product?.id || !product.name || !product.slug) {
     return null;
@@ -85,16 +99,17 @@ async function toProductContent(
       product.description ??
       `Fiche produit ${product.name} prete pour le storefront public.`,
     categorySlug: category?.slug ?? null,
-    imageUrl: await resolveProductImageUrl(product.imageUrl),
+    imageUrl: await source.resolveImage(product.imageUrl),
     price: product.price,
     currency: product.currency ?? 'EUR',
     inStock: product.inStock !== false,
   };
 }
 
-async function loadCatalogContent() {
-  const dataClient = getDataClient();
-  const { categories, products } = await listPublicCatalog(dataClient);
+async function loadCatalogContent(
+  source: StorefrontContentSource = liveSource
+) {
+  const { categories, products } = await source.loadCatalog();
   const categoriesById = new Map(
     categories
       .filter((category) => category.id)
@@ -112,11 +127,14 @@ async function loadCatalogContent() {
  * Retourne une categorie publique et ses produits publies par slug.
  */
 export async function getCategoryContentBySlug(
-  slug: string | undefined
+  slug: string | undefined,
+  source: StorefrontContentSource = liveSource
 ): Promise<StorefrontCategoryPageContent | null> {
   if (!slug) return null;
 
-  const { categories, products, categoriesById } = await loadCatalogContent();
+  const { categories, products, categoriesById } = await loadCatalogContent(
+    source
+  );
   const category = categories.find((item) => item.slug === slug);
   const categoryContent = toCategoryContent(category);
 
@@ -129,7 +147,7 @@ export async function getCategoryContentBySlug(
         products
           .filter((product) => product.categoryId === category.id)
           .map((product) =>
-            toProductContent(product, categoriesById.get(category.id))
+            toProductContent(product, categoriesById.get(category.id), source)
           )
       )
     ).filter((product): product is StorefrontProductContent =>
@@ -142,16 +160,18 @@ export async function getCategoryContentBySlug(
  * Retourne un produit public publie par slug.
  */
 export async function getProductContentBySlug(
-  slug: string | undefined
+  slug: string | undefined,
+  source: StorefrontContentSource = liveSource
 ): Promise<StorefrontProductContent | null> {
   if (!slug) return null;
 
-  const { products, categoriesById } = await loadCatalogContent();
+  const { products, categoriesById } = await loadCatalogContent(source);
   const product = products.find((item) => item.slug === slug);
 
   return await toProductContent(
     product,
-    product?.categoryId ? categoriesById.get(product.categoryId) : null
+    product?.categoryId ? categoriesById.get(product.categoryId) : null,
+    source
   );
 }
 
@@ -185,7 +205,8 @@ export async function listPrerenderableStorefrontRoutes(): Promise<string[]> {
         products.map((product) =>
           toProductContent(
             product,
-            product.categoryId ? categoriesById.get(product.categoryId) : null
+            product.categoryId ? categoriesById.get(product.categoryId) : null,
+            liveSource
           )
         )
       )

@@ -59,6 +59,40 @@ const schema = a.schema({
     categoryId: a.id(),
   }),
 
+  PublicCategoryPage: a.customType({
+    items: a.ref('PublicCategory').array().required(),
+    nextToken: a.string(),
+  }),
+
+  PublicProductPage: a.customType({
+    items: a.ref('PublicProduct').array().required(),
+    nextToken: a.string(),
+  }),
+
+  listPublicCategoryPage: a
+    .query()
+    .arguments({ nextToken: a.string() })
+    .returns(a.ref('PublicCategoryPage'))
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref('Category'),
+        entry: './list-public-categories.js',
+      })
+    ),
+
+  listPublicProductPage: a
+    .query()
+    .arguments({ nextToken: a.string() })
+    .returns(a.ref('PublicProductPage'))
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(
+      a.handler.custom({
+        dataSource: a.ref('Product'),
+        entry: './list-public-products.js',
+      })
+    ),
+
   listPublicCategories: a
     .query()
     .returns(a.ref('PublicCategory').array())

@@ -117,12 +117,20 @@ type DeleteInput = {
 
 export type DataClient = {
   queries: {
-    listPublicCategories: (
+    listPublicCategoryPage: (
+      input: { nextToken?: string | null },
       options?: QueryOptions
-    ) => ListResult<PublicCategoryModel>;
-    listPublicProducts: (
+    ) => CreateResult<{
+      items: PublicCategoryModel[];
+      nextToken?: string | null;
+    }>;
+    listPublicProductPage: (
+      input: { nextToken?: string | null },
       options?: QueryOptions
-    ) => ListResult<PublicProductModel>;
+    ) => CreateResult<{
+      items: PublicProductModel[];
+      nextToken?: string | null;
+    }>;
   };
   models: {
     Organization: {

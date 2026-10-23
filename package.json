@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build:storefront": "react-router build apps/storefront",
-    "prerender:storefront": "tsx apps/storefront/scripts/prerender-storefront.ts",
-    "build:storefront:ssg": "npm run build:storefront && npm run prerender:storefront",
+    "build:storefront": "tsx apps/storefront/scripts/build-storefront.ts",
+    "prerender:storefront": "npm run build:storefront",
+    "build:storefront:ssg": "npm run build:storefront",
+    "preview:storefront": "tsx apps/storefront/scripts/preview-storefront.ts",
     "dev:storefront": "react-router dev apps/storefront --host localhost --port 4200",
     "dev:client-a": "CLIENT_ID=client-a THEME_ID=client-a npm run dev:storefront",
     "dev:client-b": "CLIENT_ID=client-b THEME_ID=client-b npm run dev:storefront"

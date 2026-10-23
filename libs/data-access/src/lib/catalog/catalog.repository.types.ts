@@ -1,4 +1,10 @@
-import type { Category, Organization, Product, PublicCategory, PublicProduct } from './catalog.types.js';
+import type {
+  Category,
+  Organization,
+  Product,
+  PublicCategory,
+  PublicProduct,
+} from './catalog.types.js';
 
 export type GraphQLErrorLike = {
   message?: string;
@@ -91,12 +97,18 @@ export type CatalogAdminDataClient = {
 
 export type CatalogPublicDataClient = {
   queries: {
-    listPublicCategories: (
+    listPublicCategoryPage: (
+      input: { nextToken?: string | null },
       options?: QueryOptions
-    ) => Promise<GraphQLListResult<PublicCategory>>;
-    listPublicProducts: (
+    ) => Promise<
+      GraphQLResult<{ items: PublicCategory[]; nextToken?: string | null }>
+    >;
+    listPublicProductPage: (
+      input: { nextToken?: string | null },
       options?: QueryOptions
-    ) => Promise<GraphQLListResult<PublicProduct>>;
+    ) => Promise<
+      GraphQLResult<{ items: PublicProduct[]; nextToken?: string | null }>
+    >;
   };
 };
 

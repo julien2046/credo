@@ -1,36 +1,48 @@
-import {
-  getCatalogErrorMessage,
-} from './catalog-result.js';
+import { getCatalogErrorMessage } from './catalog-result.js';
 import type {
   CatalogPublicDataClient,
+  GraphQLResult,
   PublicCatalogSnapshot,
 } from './catalog.repository.types.js';
 
-function listData<TData>(data: TData[] | null | undefined): TData[] {
-  return Array.isArray(data) ? data : [];
+async function collectPages<T>(
+  query: (input: {
+    nextToken: string | null;
+  }) => Promise<GraphQLResult<{ items: T[]; nextToken?: string | null }>>
+): Promise<T[]> {
+  const items: T[] = [];
+  const seen = new Set<string>();
+  let nextToken: string | null = null;
+  do {
+    const result = await query({ nextToken });
+    const message = getCatalogErrorMessage(result.errors);
+    if (message) throw new Error(message);
+    if (!result.data || !Array.isArray(result.data.items)) {
+      throw new Error('Reponse catalogue invalide');
+    }
+    items.push(...result.data.items);
+    nextToken = result.data.nextToken ?? null;
+    if (
+      nextToken !== null &&
+      (typeof nextToken !== 'string' || seen.has(nextToken))
+    ) {
+      throw new Error('Pagination catalogue invalide');
+    }
+    if (nextToken) seen.add(nextToken);
+  } while (nextToken);
+  return items;
 }
 
 export async function listPublicCatalog(
   dataClient: CatalogPublicDataClient
 ): Promise<PublicCatalogSnapshot> {
-  const [categoryResult, productResult] = await Promise.all([
-    dataClient.queries.listPublicCategories({ authMode: 'apiKey' }),
-    dataClient.queries.listPublicProducts({ authMode: 'apiKey' }),
+  const [categories, products] = await Promise.all([
+    collectPages((input) =>
+      dataClient.queries.listPublicCategoryPage(input, { authMode: 'apiKey' })
+    ),
+    collectPages((input) =>
+      dataClient.queries.listPublicProductPage(input, { authMode: 'apiKey' })
+    ),
   ]);
-
-  const message = [
-    getCatalogErrorMessage(categoryResult.errors),
-    getCatalogErrorMessage(productResult.errors),
-  ]
-    .filter(Boolean)
-    .join(', ');
-
-  if (message) {
-    throw new Error(message);
-  }
-
-  return {
-    categories: listData(categoryResult.data),
-    products: listData(productResult.data),
-  };
+  return { categories, products };
 }
