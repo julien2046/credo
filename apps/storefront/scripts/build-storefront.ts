@@ -6,11 +6,24 @@ import { fileURLToPath } from 'node:url';
 import { fetchPublicCatalog } from '@credo/data-access';
 import { configureAmplify, resolveStorageUrl } from '@credo/platform-amplify';
 import { prepareCatalog } from './catalog-build';
+import { loadEnv } from 'vite';
+import { resolveSeoConfig } from '../src/app/seo/seo-config';
+import { writeSeoFiles } from './seo-files';
 
 const workspace = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const directory = await mkdtemp(join(tmpdir(), 'credo-prerender-'));
 
 try {
+  const env = {
+    ...loadEnv('production', join(workspace, 'apps/storefront'), 'VITE_'),
+    ...process.env,
+  };
+  const seo = resolveSeoConfig(env.VITE_SITE_URL, env.VITE_SEO_INDEXABLE);
+  console.log(
+    `SEO: ${seo.indexable ? 'indexable' : 'noindex'}${
+      seo.origin ? ` (${seo.origin})` : ''
+    }`
+  );
   let input: unknown;
   if (process.env.STOREFRONT_PRERENDER_SNAPSHOT) {
     input = JSON.parse(
@@ -61,6 +74,8 @@ try {
       stdio: 'inherit',
       env: {
         ...process.env,
+        VITE_SITE_URL: seo.origin ?? '',
+        VITE_SEO_INDEXABLE: String(seo.indexable),
         STOREFRONT_BUILD_SNAPSHOT: prepared.snapshotPath,
         STOREFRONT_BUILD_ASSETS: prepared.assetsDirectory,
         STOREFRONT_BUILD_PRODUCTS: prepared.snapshot.products.length
@@ -76,6 +91,13 @@ try {
     child.once('error', reject);
     child.once('exit', (code) => resolveCode(code ?? 1));
   });
+  if (code === 0) {
+    await writeSeoFiles(
+      join(workspace, 'apps/storefront/dist/client'),
+      prepared.routes,
+      seo
+    );
+  }
   process.exitCode = code;
 } finally {
   await rm(directory, { recursive: true, force: true });

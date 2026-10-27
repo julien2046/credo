@@ -17,6 +17,7 @@
     "moduleResolution": "bundler"
   },
   "include": [
+    "amplify-custom-rules.json",
     "scripts/**/*.ts",
     "vite.config.ts",
     "vite.config.mts",

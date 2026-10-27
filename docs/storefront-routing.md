@@ -90,18 +90,82 @@ Elle valide le rendu initial uniquement : la navigation client utilise toujours
 le backend des outputs. Ces outputs doivent inclure les nouvelles requetes
 paginees, ce qui necessite un deploiement ou une regeneration apres deploiement.
 
-## Limites et lot suivant
+## Lot 3 : SEO et hebergement
 
-L'accueil, les promos, le panier, le compte et l'admin restent dynamiques dans ce
-lot. Les metas SEO completes, canonical, JSON-LD, sitemap, robots et le rebuild
-automatique restent a traiter. Une 404 client n'est pas encore une 404 HTTP
-configuree sur l'hebergement.
+Les modules de routes exportent `meta` et utilisent les fonctions pures de
+`src/app/seo/catalog-seo.ts`. Les produits et categories ont un titre, une
+description et, si le domaine est configure, une URL canonique absolue sans
+parametres. Les produits ont egalement un JSON-LD `Product` / `Offer` avec prix,
+devise, disponibilite et image lorsqu'elle existe. Aucun avis ou marque fabricant
+n'est invente. React Router serialise et echappe le JSON-LD.
 
-Amplify doit publier `apps/storefront/dist/client` et servir les fichiers
-prerendus avant le fallback SPA. Une regle globale qui reecrit toutes les URLs
-vers `index.html` peut masquer le prerendu : verifier les regles d'hebergement
-avant validation en production. Aucun changement AWS n'est realise par les
-tests locaux. Les tests simules ne remplacent pas un test Cognito/S3 reel.
+L'accueil et les promos sont encore des placeholders : ils restent `noindex`,
+comme l'admin, le compte, le panier, le checkout et les pages d'erreur.
+Seules les routes catalogue prerendues sont incluses dans le sitemap de production.
+
+Configuration publique, specifique a chaque deploiement :
+
+| Variable | Valeur | Comportement |
+| --- | --- | --- |
+| `VITE_SITE_URL` | Origine HTTPS reelle de la boutique | Sans chemin, query ou fragment ; jamais derivee de `domainLabel` |
+| `VITE_SEO_INDEXABLE` | `false` ou absente | Toutes les pages en noindex, sitemap vide |
+| `VITE_SEO_INDEXABLE` | `true` | Catalogue indexable ; URL HTTPS obligatoire |
+
+Definir ces variables dans Amplify pour chaque branche. En local, elles peuvent
+etre passees dans la commande ou dans les fichiers Vite de `apps/storefront`.
+Elles sont publiques et compilees dans le frontend : ne jamais y mettre un secret.
+Le build et le frontend utilisent la meme configuration normalisee.
+
+Le build genere `sitemap.xml`, `robots.txt` et `404.html` dans `dist/client`.
+Le sitemap ne contient que les slugs publies de ce build, pas les brouillons,
+routes privees ou fausses dates `lastmod`. `robots.txt` laisse lire les pages pour
+que les moteurs voient `noindex` ; ce n'est pas une protection d'acces. Les
+donnees privees doivent toujours etre protegees par le backend.
+
+### Regles Amplify a appliquer manuellement
+
+Dans Hosting > Rewrites and redirects, utiliser le contenu de
+`apps/storefront/amplify-custom-rules.json` pour les regles de routage de l'app.
+Conserver les redirections de domaines/metier necessaires apres examen, mais
+retirer l'ancienne regle SPA globale `200 -> /index.html` si elle existe.
+Ce fichier n'est pas applique automatiquement par `amplify.yml`.
+
+La premiere regle sert le shell SPA uniquement pour admin/account/cart/checkout/
+promo. La derniere renvoie `404.html` avec un statut HTTP 404 quand le fichier
+demande n'existe pas. Les fichiers catalogue, `.data`, images, sitemap et robots
+doivent etre servis normalement. Amplify gere les repertoires `index.html` via
+ses clean URLs ; verifier aussi les URLs avec slash final apres deploiement.
+
+La preview locale reproduit cette distinction. Un nouveau produit publie apres
+le build peut etre visible en navigation client, mais son acces direct reste
+404 tant que le site n'est pas reconstruit. Les suppressions et les changements
+de prix/stock dans le HTML demandent egalement un rebuild.
+
+### Verification SEO
+
+Pour tester les balises sans autoriser l'indexation, remplacer le domaine
+d'exemple par celui de la boutique (le domaine d'exemple suffit pour un test local) :
+
+```sh
+CLIENT_ID=client-a THEME_ID=client-a VITE_SITE_URL=https://boutique.example VITE_SEO_INDEXABLE=false npm run build:storefront
+npm run preview:storefront
+```
+
+1. Lire le code source d'une fiche et d'une categorie : un seul titre, une seule
+   description, une seule canonical, et un JSON-LD uniquement sur le produit.
+2. Verifier `/sitemap.xml` : vide en mode test. Refaire le build avec `true` en
+   local pour verifier les URLs absolues, puis remettre `false` pour une demo.
+3. Verifier `/robots.txt` et l'absence de brouillons dans le sitemap de production.
+4. Verifier qu'une URL `/p/inexistant` et un fichier absent renvoient HTTP 404,
+   tandis que `/admin/products` reste HTTP 200 avec connexion obligatoire.
+5. Apres deploiement, refaire ces controles sur le domaine Amplify et le domaine
+   canonique. Ne passer une boutique reelle a `true` qu'apres validation du contenu.
+
+L'application des regles AWS et leur validation en production restent manuelles.
+Le prochain lot concerne le rebuild automatique apres changement du catalogue.
+
+References : [React Router Meta](https://reactrouter.com/how-to/meta) et
+[Amplify redirects/clean URLs](https://docs.aws.amazon.com/amplify/latest/userguide/redirect-rewrite-examples.html).
 
 ## Verification manuelle
 

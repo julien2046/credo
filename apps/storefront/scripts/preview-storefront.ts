@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spaPathPattern } from './hosting-routes';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../dist/client');
 const port = Number(process.env.PORT ?? 4300);
@@ -10,6 +11,8 @@ const types: Record<string, string> = {
   '.js': 'text/javascript',
   '.css': 'text/css',
   '.json': 'application/json',
+  '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.webp': 'image/webp',
@@ -34,10 +37,16 @@ createServer(async (request, response) => {
       return;
     }
     const info = await stat(path).catch(() => null);
+    let status = 200;
     if (info?.isDirectory()) path = join(path, 'index.html');
-    else if (!info && !extname(pathname)) path = join(root, 'index.html');
+    else if (!info && spaPathPattern.test(pathname))
+      path = join(root, 'index.html');
+    else if (!info) {
+      path = join(root, '404.html');
+      status = 404;
+    }
     const data = await readFile(path);
-    response.writeHead(200, {
+    response.writeHead(status, {
       'Content-Type': types[extname(path)] ?? 'application/octet-stream',
       'Cache-Control': 'no-store',
     });

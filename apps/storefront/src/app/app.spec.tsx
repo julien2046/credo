@@ -10,6 +10,7 @@ import StorefrontDynamicRoute from '../routes/storefront-dynamic';
 import ProductRoute, {
   clientLoader as productLoader,
   ErrorBoundary as ProductErrorBoundary,
+  meta as productRouteMeta,
 } from '../routes/product';
 import CategoryRoute, {
   clientLoader as categoryLoader,
@@ -136,6 +137,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('builds route metadata from React Router loaderData', () => {
+    const meta = productRouteMeta({
+      loaderData: { id: 'p1', slug: 'chaise', title: 'Chaise SEO', summary: 'Description SEO',
+        categorySlug: null, imageUrl: null, price: 20, currency: 'CAD', inStock: true },
+      params: { productSlug: 'chaise' },
+      matches: [],
+      location: { pathname: '/p/chaise', search: '', hash: '', state: null, key: 'test' },
+    });
+    expect(meta).toContainEqual({ title: 'Chaise SEO | Credo Atelier' });
+    expect(meta).toContainEqual({ name: 'description', content: 'Description SEO' });
+  });
+
   it('should render public home route', async () => {
     renderRoute('/');
 

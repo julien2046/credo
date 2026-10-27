@@ -1,0 +1,80 @@
+- generic [ref=e4]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - heading "Credo Storefront" [level=1] [ref=e9]
+        - paragraph [ref=e10]: Credo Atelier · Boutique e-commerce de reference pour valider le socle produit.
+        - paragraph [ref=e11]: Storefront React + Amplify Gen 2 avec OTP téléphone.
+      - generic [ref=e12]:
+        - generic [ref=e13]: Atelier Editorial
+        - generic [ref=e15]: SMS OTP
+        - generic [ref=e17]: Storefront public + admin
+    - paragraph [ref=e19]: "Référence visuelle réalignée sur `RUThereV2`: hero simple, grille principale à deux colonnes, cartes sobres et état de session clair."
+  - generic [ref=e20]:
+    - generic [ref=e21]:
+      - generic [ref=e23]:
+        - heading "Session storefront" [level=5] [ref=e24]
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - heading "Etat de session" [level=6] [ref=e28]
+              - paragraph [ref=e29]: Contrôle rapide de la session Cognito et des droits admin.
+            - generic [ref=e30]: Verification
+          - generic [ref=e32]:
+            - generic [ref=e33]:
+              - generic [ref=e34]: Acces admin
+              - heading "Bloque" [level=4] [ref=e35]
+              - paragraph [ref=e36]: Dans ce mode basique, toute session ouverte peut acceder au backoffice.
+            - generic [ref=e37]:
+              - generic [ref=e38]: Identifiant
+              - heading "Non renseigne" [level=4] [ref=e39]
+              - paragraph [ref=e40]: Numero ou login remonté par Cognito.
+          - paragraph [ref=e41]: La carte OTP reste disponible sur les routes admin, et également ici en lecture rapide hors backoffice.
+      - generic [ref=e44]:
+        - heading "Chaise de test" [level=5] [ref=e45]
+        - generic [ref=e46]:
+          - generic [ref=e49]:
+            - heading "Image produit" [level=6] [ref=e50]
+            - paragraph [ref=e51]: Aucune image n'est encore associee a ce produit.
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - heading "/p/chaise-test" [level=6] [ref=e54]
+              - paragraph [ref=e55]: Description presente dans le HTML statique.
+            - generic [ref=e56]:
+              - generic [ref=e57]: 49,90 $
+              - generic [ref=e59]: En stock
+              - link "/c/mobilier-test" [ref=e61] [cursor=pointer]:
+                - /url: /c/mobilier-test
+            - separator [ref=e63]
+            - button "Ajouter au panier" [ref=e64] [cursor=pointer]
+    - generic [ref=e65]:
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - text: Storefront
+          - heading "Navigation publique" [level=6] [ref=e69]
+          - paragraph [ref=e70]: Les pages vitrine, categories, produits et promos restent les premières candidates au prerender.
+        - generic [ref=e71]:
+          - link "/" [ref=e72] [cursor=pointer]:
+            - /url: /
+          - link "/c/:categorySlug" [ref=e73] [cursor=pointer]:
+            - /url: /c/featured
+          - link "/p/:productSlug" [ref=e74] [cursor=pointer]:
+            - /url: /p/demo-product
+          - link "/promo/:promoSlug" [ref=e75] [cursor=pointer]:
+            - /url: /promo/summer
+          - link "/cart" [ref=e76] [cursor=pointer]:
+            - /url: /cart
+      - generic [ref=e78]:
+        - generic [ref=e79]:
+          - text: Backoffice
+          - heading "Navigation admin" [level=6] [ref=e80]
+          - paragraph [ref=e81]: Le backoffice reste dynamique et protégé, avec un accès par OTP téléphone.
+        - generic [ref=e82]:
+          - link "/admin" [ref=e83] [cursor=pointer]:
+            - /url: /admin
+          - link "/admin/products" [ref=e84] [cursor=pointer]:
+            - /url: /admin/products
+          - link "/admin/categories" [ref=e85] [cursor=pointer]:
+            - /url: /admin/categories
+          - link "/admin/promos" [ref=e86] [cursor=pointer]:
+            - /url: /admin/promos
