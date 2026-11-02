@@ -1,4 +1,4 @@
-import { cleanup, render, screen, act } from '@testing-library/react';
+import { cleanup, render, screen, act, fireEvent } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { clientConfigClientA } from '@credo/client-config-client-a';
 import { clientATheme } from '@credo/themes-client-a';
@@ -137,6 +137,15 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('navigates to an actual category from the shop menu', async () => {
+    renderRoute('/');
+    fireEvent.click(await screen.findByRole('button', { name: 'Catégories' }));
+    const category = await screen.findByRole('menuitem', { name: 'Mobilier' });
+    expect(category.getAttribute('href')).toBe('/c/mobilier');
+    fireEvent.click(category);
+    expect(await screen.findByRole('heading', { name: 'Mobilier' })).toBeTruthy();
+  });
+
   it('builds route metadata from React Router loaderData', () => {
     const meta = productRouteMeta({
       loaderData: { id: 'p1', slug: 'chaise', title: 'Chaise SEO', summary: 'Description SEO',

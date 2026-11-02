@@ -23,6 +23,7 @@ import {
   useStorefrontAuth,
 } from '@credo/feature';
 import { MetricTile, NavigationGroup, StorefrontCard } from '@credo/ui';
+import { ShopNavigation } from './shop-navigation';
 
 /**
  * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
@@ -173,6 +174,7 @@ export function App({
       >
         <Container maxWidth="lg">
           <Stack spacing={3}>
+            <ShopNavigation />
             <Paper
               variant="outlined"
               sx={{
@@ -322,19 +324,6 @@ export function App({
               </Stack>
 
               <Stack spacing={3}>
-                <NavigationGroup
-                  title="Navigation publique"
-                  eyebrow="Storefront"
-                  description="Les pages vitrine, categories, produits et promos restent les premières candidates au prerender."
-                  theme={theme}
-                  links={[
-                    { to: '/', label: '/', variant: 'outlined' },
-                    { to: '/c/featured', label: '/c/:categorySlug', variant: 'outlined' },
-                    { to: '/p/demo-product', label: '/p/:productSlug', variant: 'outlined' },
-                    { to: '/promo/summer', label: '/promo/:promoSlug', variant: 'outlined' },
-                    { to: '/cart', label: '/cart', variant: 'outlined' },
-                  ]}
-                />
                 <NavigationGroup
                   title="Navigation admin"
                   eyebrow="Backoffice"

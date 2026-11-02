@@ -33,13 +33,17 @@ async function collectPages<T>(
   return items;
 }
 
+export function listPublicCategories(dataClient: CatalogPublicDataClient) {
+  return collectPages((input) =>
+    dataClient.queries.listPublicCategoryPage(input, { authMode: 'apiKey' })
+  );
+}
+
 export async function listPublicCatalog(
   dataClient: CatalogPublicDataClient
 ): Promise<PublicCatalogSnapshot> {
   const [categories, products] = await Promise.all([
-    collectPages((input) =>
-      dataClient.queries.listPublicCategoryPage(input, { authMode: 'apiKey' })
-    ),
+    listPublicCategories(dataClient),
     collectPages((input) =>
       dataClient.queries.listPublicProductPage(input, { authMode: 'apiKey' })
     ),
