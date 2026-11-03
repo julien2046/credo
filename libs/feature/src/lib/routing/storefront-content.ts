@@ -126,6 +126,14 @@ async function loadCatalogContent(
 /**
  * Retourne une categorie publique et ses produits publies par slug.
  */
+export async function getHomeSelection(source: StorefrontContentSource = liveSource) {
+  const { products, categoriesById } = await loadCatalogContent(source);
+  const selection = await Promise.all(products.filter(p => p.id && p.name && p.slug).slice(0, 6).map(p =>
+    toProductContent(p, p.categoryId ? categoriesById.get(p.categoryId) : null, source)
+  ));
+  return selection.filter((p): p is StorefrontProductContent => p !== null);
+}
+
 export async function getCategoryContentBySlug(
   slug: string | undefined,
   source: StorefrontContentSource = liveSource

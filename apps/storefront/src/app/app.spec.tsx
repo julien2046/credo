@@ -162,10 +162,10 @@ describe('App', () => {
     renderRoute('/');
 
     await screen.findByRole('heading', {
-      name: /credo storefront/i,
+      name: 'La sélection',
     });
 
-    expect(screen.getByText(/page vitrine publique/i)).toBeTruthy();
+    expect((await screen.findByRole('link', { name: /Chaise verte/ })).getAttribute('href')).toBe('/p/chaise-verte');
   });
 
   it('should render protected admin products route for authenticated user', async () => {
@@ -206,7 +206,7 @@ describe('App', () => {
         await screen.findByRole('heading', { name: /introuvable/i })
       ).toBeTruthy();
       expect(
-        screen.getByRole('heading', { name: 'Credo Storefront' })
+        screen.getByRole('link', { name: 'Credo Atelier' })
       ).toBeTruthy();
     }
   );

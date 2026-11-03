@@ -37,8 +37,7 @@ export function ShopNavigation() {
       direction="row"
       flexWrap="wrap"
       sx={{
-        borderBottom: 1,
-        borderColor: 'divider',
+        gap: { xs: 0, sm: 1 },
         '& .active': {
           textDecoration: 'underline',
           textUnderlineOffset: '4px',
