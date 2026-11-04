@@ -137,6 +137,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('switches between the shop and merchant navigation', async () => {
+    renderRoute('/');
+    expect(screen.getByRole('navigation', { name: 'Boutique' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'Espace marchand' }));
+    expect(await screen.findByRole('navigation', { name: 'Administration' })).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: 'Boutique' })).toBeNull();
+    fireEvent.click(screen.getByRole('link', { name: 'Voir la boutique' }));
+    expect(await screen.findByRole('heading', { name: 'La sélection' })).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: 'Administration' })).toBeNull();
+  });
+
   it('navigates to an actual category from the shop menu', async () => {
     renderRoute('/');
     fireEvent.click(await screen.findByRole('button', { name: 'Catégories' }));

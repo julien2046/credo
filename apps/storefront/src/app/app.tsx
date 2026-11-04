@@ -54,7 +54,7 @@ export function App({
     handleConfirmSignUp,
     handleSignOut,
   } = useStorefrontAuth();
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
 
   const muiTheme = createTheme({
     palette: {
@@ -164,17 +164,24 @@ export function App({
         <Container maxWidth="lg">
           <Stack component="header" direction={{ xs: 'column', md: 'row' }} alignItems={{ md: 'center' }}
             justifyContent="space-between" spacing={1} sx={{ py: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography component={Link} to="/" sx={{ fontFamily: theme.accentFontFamily, fontSize: 26,
-              fontWeight: 700, textDecoration: 'none', color: 'text.primary' }}>{clientConfig.brandName}</Typography>
-            <ShopNavigation />
+            <Stack>
+              {isAdminRoute && <Typography variant="overline" color="primary">Administration</Typography>}
+              <Typography component={Link} to={isAdminRoute ? '/admin' : '/'} sx={{ fontFamily: theme.accentFontFamily, fontSize: 26,
+                fontWeight: 700, textDecoration: 'none', color: 'text.primary' }}>{clientConfig.brandName}</Typography>
+            </Stack>
+            {!isAdminRoute && <ShopNavigation />}
+            <Button component={Link} variant="outlined" sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
+              to={isAdminRoute ? '/' : '/admin'}>
+              {isAdminRoute ? 'Voir la boutique' : 'Espace marchand'}
+            </Button>
           </Stack>
-          {isAdminRoute && (
+          {isAdminRoute && auth.status === 'signedIn' && (
             <Stack component="nav" aria-label="Administration" direction="row" flexWrap="wrap" sx={{ py: 2 }}>
-              <Button component={Link} to="/admin">Espace marchand</Button>
+              <Button component={Link} to="/admin">Tableau de bord</Button>
               <Button component={Link} to="/admin/products">Produits</Button>
               <Button component={Link} to="/admin/categories">Catégories</Button>
               <Button component={Link} to="/admin/promos">Promotions</Button>
-              {auth.status === 'signedIn' && <Button onClick={handleSignOut}>Déconnexion</Button>}
+              <Button onClick={handleSignOut}>Déconnexion</Button>
             </Stack>
           )}
           <Box component="main" aria-busy={navigation.state === 'loading'} sx={{ py: { xs: 3, md: 5 }, minHeight: '65vh' }}>
@@ -184,7 +191,6 @@ export function App({
           <Stack component="footer" direction="row" alignItems="center" justifyContent="space-between"
             sx={{ py: 2, borderTop: 1, borderColor: 'divider' }}>
             <Typography variant="body2">{clientConfig.brandName}</Typography>
-            <Button component={Link} to="/admin">Espace marchand</Button>
           </Stack>
         </Container>
       </Box>
