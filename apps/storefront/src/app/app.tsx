@@ -1,5 +1,6 @@
 import {
   Link,
+  NavLink,
   Outlet,
   useNavigation,
   useLocation,
@@ -176,12 +177,12 @@ export function App({
             </Button>
           </Stack>
           {isAdminRoute && auth.status === 'signedIn' && (
-            <Stack component="nav" aria-label="Administration" direction="row" flexWrap="wrap" sx={{ py: 2 }}>
-              <Button component={Link} to="/admin">Tableau de bord</Button>
-              <Button component={Link} to="/admin/products">Produits</Button>
-              <Button component={Link} to="/admin/categories">Catégories</Button>
-              <Button component={Link} to="/admin/promos">Promotions</Button>
-              <Button onClick={handleSignOut}>Déconnexion</Button>
+            <Stack component="nav" aria-label="Administration" direction="row" flexWrap="wrap" sx={{ py: 1, gap: 0.5, borderBottom: 1, borderColor: 'divider', '& .active': { bgcolor: 'action.selected', color: 'text.primary' } }}>
+              <Button component={NavLink} end to="/admin">Tableau de bord</Button>
+              <Button component={NavLink} end to="/admin/products">Produits</Button>
+              <Button component={NavLink} end to="/admin/categories">Catégories</Button>
+              <Button component={NavLink} end to="/admin/promos">Promotions</Button>
+              <Button sx={{ ml: { md: 'auto' } }} color="inherit" onClick={handleSignOut}>Déconnexion</Button>
             </Stack>
           )}
           <Box component="main" aria-busy={navigation.state === 'loading'} sx={{ py: { xs: 3, md: 5 }, minHeight: '65vh' }}>

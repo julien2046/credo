@@ -1,14 +1,14 @@
 import {
   Alert,
   Box,
-  Chip,
+  Button,
   CircularProgress,
   Paper,
   Stack,
   Typography,
 } from '@mui/material';
 import type { StorefrontTheme } from '@credo/shared';
-import { SectionLead, StorefrontCard } from '@credo/ui';
+import { useState } from 'react';
 import {
   CategoryCreateForm,
   OrganizationCreateForm,
@@ -24,12 +24,15 @@ import { useAdminCatalog } from './catalog/use-admin-catalog';
 export type AdminCatalogProps = {
   theme: StorefrontTheme;
   currency: string;
+  section: 'products' | 'categories';
 };
 
 /**
  * Assemble le backoffice catalogue avec les donnees et actions du hook metier.
  */
-export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
+export function AdminCatalog({ theme, currency, section }: AdminCatalogProps) {
+  const [form, setForm] = useState<'item' | 'organization' | null>(null);
+  const isProducts = section === 'products';
   const {
     actionId,
     cancelCategoryEdit,
@@ -93,32 +96,19 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
 
   return (
     <Stack spacing={3}>
-      <StorefrontCard title="Catalogue admin" theme={theme}>
-        <Stack spacing={3}>
-          <SectionLead
-            title="Catalogue v1"
-            description="Cree les boutiques, categories et produits publiables qui alimenteront les pages publiques et le futur prerender SEO."
-          />
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <Chip
-              label={`${organizations.length} organisation(s)`}
-              variant="outlined"
-            />
-            <Chip
-              label={`${categories.length} categorie(s)`}
-              variant="outlined"
-            />
-            <Chip label={`${products.length} produit(s)`} variant="outlined" />
-            <Chip label={currency} color="primary" />
-            <Chip label={theme.name} variant="outlined" />
-          </Stack>
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', xl: 'repeat(3, 1fr)' },
-            }}
-          >
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={2}>
+        <Box>
+          <Typography variant="overline" color="text.secondary">Catalogue</Typography>
+          <Typography component="h1" variant="h4">{isProducts ? 'Produits' : 'Catégories'}</Typography>
+        </Box>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Button variant="outlined" aria-expanded={form === 'organization'} onClick={() => setForm(form === 'organization' ? null : 'organization')}>Ajouter une boutique</Button>
+          <Button variant="contained" aria-expanded={form === 'item'} onClick={() => setForm(form === 'item' ? null : 'item')}>
+            {isProducts ? 'Ajouter un produit' : 'Ajouter une catégorie'}
+          </Button>
+        </Stack>
+      </Stack>
+      {form === 'organization' && (
             <OrganizationCreateForm
               name={organizationName}
               isSubmitting={isOrganizationSubmitting}
@@ -128,6 +118,8 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
               slug={organizationSlug}
               theme={theme}
             />
+      )}
+      {form === 'item' && !isProducts && (
             <CategoryCreateForm
               control={categoryControl}
               errors={categoryFormErrors}
@@ -138,6 +130,8 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
               selectedOrganizationId={selectedCategoryOrganizationId}
               theme={theme}
             />
+      )}
+      {form === 'item' && isProducts && (
             <ProductCreateForm
               categories={productCategories}
               control={productControl}
@@ -153,9 +147,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
               selectedOrganizationId={selectedProductOrganizationId}
               theme={theme}
             />
-          </Box>
-        </Stack>
-      </StorefrontCard>
+      )}
 
       {loading ? (
         <Paper
@@ -210,6 +202,7 @@ export function AdminCatalog({ theme, currency }: AdminCatalogProps) {
       ) : null}
 
       <CatalogListPanels
+        section={section}
         actionId={actionId}
         categories={categories}
         categoriesById={categoriesById}

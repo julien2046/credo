@@ -1,5 +1,6 @@
+import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { Route, useParams } from 'react-router';
+import { Link, Route, useParams } from 'react-router';
 import type { StorefrontTheme } from '@credo/shared';
 import { AdminCatalog } from '../admin/admin-catalog';
 import type { AuthState } from '../auth/auth.types';
@@ -63,11 +64,24 @@ export function renderStorefrontRoutes({
         path="/admin"
         element={
           <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <RoutePlaceholder
-              title="Admin"
-              details="Backoffice principal"
-              theme={theme}
-            />
+            <Stack spacing={3}>
+              <Typography component="h1" variant="h4">Tableau de bord</Typography>
+              <Typography variant="h6" component="h2">Catalogue</Typography>
+              <Stack divider={<Divider />} sx={{ borderBlock: 1, borderColor: 'divider' }}>
+                {[
+                  ['/admin/products', 'Produits', 'Prix, stocks et publication'],
+                  ['/admin/categories', 'Catégories', 'Organisation du catalogue'],
+                ].map(([to, label, detail]) => (
+                  <Box key={to} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, py: 2 }}>
+                    <Box>
+                      <Typography fontWeight={600}>{label}</Typography>
+                      <Typography variant="body2" color="text.secondary">{detail}</Typography>
+                    </Box>
+                    <Button component={Link} to={to} aria-label={'Gérer : ' + label}>Gérer</Button>
+                  </Box>
+                ))}
+              </Stack>
+            </Stack>
           </AdminGuard>
         }
       />
@@ -75,7 +89,7 @@ export function renderStorefrontRoutes({
         path="/admin/products"
         element={
           <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <AdminCatalog theme={theme} currency={currency} />
+            <AdminCatalog key="products" section="products" theme={theme} currency={currency} />
           </AdminGuard>
         }
       />
@@ -83,7 +97,7 @@ export function renderStorefrontRoutes({
         path="/admin/categories"
         element={
           <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <AdminCatalog theme={theme} currency={currency} />
+            <AdminCatalog key="categories" section="categories" theme={theme} currency={currency} />
           </AdminGuard>
         }
       />

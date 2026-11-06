@@ -1,73 +1,39 @@
 import { Link as RouterLink } from 'react-router';
-import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { Box, Card, CardActionArea, CardContent, Typography } from '@mui/material';
 import { formatPrice, type StorefrontTheme } from '@credo/shared';
 import type { StorefrontProductContent } from '../routing/storefront-content';
 
 export function ProductSummaryCard({
-  product,
-  theme,
+  product, theme,
 }: {
   product: StorefrontProductContent;
   theme: StorefrontTheme;
 }) {
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 2,
-        borderRadius: 2.5,
-        borderColor: alpha(theme.accentColor, 0.14),
-        backgroundColor: alpha(theme.surface, 0.9),
-      }}
-    >
-      <Stack spacing={1.5}>
-        {product.imageUrl ? (
-          <Box
-            component="img"
-            src={product.imageUrl}
-            alt={product.title}
-            sx={{
-              display: 'block',
-              width: '100%',
-              aspectRatio: '4 / 3',
-              objectFit: 'cover',
-              borderRadius: 2,
-              border: `1px solid ${alpha(theme.accentColor, 0.1)}`,
-            }}
-          />
-        ) : null}
-        <Stack spacing={0.75}>
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+    <Card variant="outlined" sx={{ borderRadius: '8px', height: '100%', minWidth: 0,
+      bgcolor: theme.surface, borderColor: theme.borderColor,
+      '&:hover': { borderColor: theme.accentColor } }}>
+      <CardActionArea component={RouterLink} to={'/p/' + encodeURIComponent(product.slug)}
+        aria-label={'Voir le produit : ' + product.title}
+        sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <Box sx={{ aspectRatio: '1', bgcolor: 'action.hover', display: 'grid', placeItems: 'center', overflow: 'hidden' }}>
+          {product.imageUrl ? (
+            <Box component="img" src={product.imageUrl} alt="" loading="lazy"
+              sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          ) : (
+            <Typography variant="body2" color="text.secondary">Photo à venir</Typography>
+          )}
+        </Box>
+        <CardContent sx={{ flex: 1, p: { xs: 1.5, sm: 2 } }}>
+          <Typography component="h2" sx={{ fontSize: 18, fontWeight: 600, overflowWrap: 'anywhere', mb: 1 }}>
             {product.title}
           </Typography>
-          <Typography sx={{ color: theme.mutedTextColor }}>
-            {product.summary}
+          <Typography sx={{ fontWeight: 700 }}>{formatPrice(product.price, product.currency)}</Typography>
+          <Typography variant="caption" sx={{ color: theme.mutedTextColor }}>
+            {product.inStock ? 'En stock' : 'Rupture de stock'}
           </Typography>
-        </Stack>
-        <Stack
-          direction="row"
-          spacing={1}
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography sx={{ fontWeight: 800 }}>
-            {formatPrice(product.price, product.currency)}
-          </Typography>
-          <Chip
-            label={product.inStock ? 'En stock' : 'Rupture'}
-            color={product.inStock ? 'primary' : 'default'}
-            size="small"
-          />
-        </Stack>
-        <Button
-          component={RouterLink}
-          to={`/p/${product.slug}`}
-          variant="outlined"
-        >
-          Voir le produit
-        </Button>
-      </Stack>
-    </Paper>
+        </CardContent>
+      </CardActionArea>
+    </Card>
   );
 }

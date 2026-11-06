@@ -2,7 +2,6 @@ import {
   Box,
   Button,
   Chip,
-  Divider,
   Paper,
   Stack,
   Typography,
@@ -10,9 +9,9 @@ import {
 import { alpha } from '@mui/material/styles';
 import type { Category, Organization, Product } from '@credo/data-access';
 import { formatPrice, type StorefrontTheme } from '@credo/shared';
-import { SectionLead, StorefrontCard } from '@credo/ui';
 
 type CatalogListPanelsProps = {
+  section: 'products' | 'categories';
   actionId: string | null;
   categories: Category[];
   categoriesById: Map<string, Category>;
@@ -55,6 +54,7 @@ function EmptyState({ children, theme }: EmptyStateProps) {
 
 /** Listes de lecture et actions rapides du catalogue admin. */
 export function CatalogListPanels({
+  section,
   actionId,
   categories,
   categoriesById,
@@ -71,20 +71,10 @@ export function CatalogListPanels({
   theme,
 }: CatalogListPanelsProps) {
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gap: 3,
-        gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' },
-      }}
-    >
-      <StorefrontCard title="Organisations stockees" theme={theme}>
+    <Stack spacing={2}>
+      <Box component="details" sx={{ borderBottom: 1, borderColor: 'divider', pb: 1.5 }}>
+        <Typography component="summary" sx={{ cursor: 'pointer', fontWeight: 600 }}>Boutiques ({organizations.length})</Typography>
         <Stack spacing={2}>
-          <SectionLead
-            title="Boutiques racines"
-            description="Chaque organisation porte les categories et produits d'une boutique."
-          />
-          <Divider />
           {!loading && organizations.length === 0 ? (
             <EmptyState theme={theme}>
               Aucune organisation pour le moment.
@@ -113,15 +103,10 @@ export function CatalogListPanels({
             ))}
           </Stack>
         </Stack>
-      </StorefrontCard>
+      </Box>
 
-      <StorefrontCard title="Categories stockees" theme={theme}>
+      {section === 'categories' && (
         <Stack spacing={2}>
-          <SectionLead
-            title="Routes categorie"
-            description="Les slugs alimenteront les pages publiques /c/:categorySlug."
-          />
-          <Divider />
           {!loading && categories.length === 0 ? (
             <EmptyState theme={theme}>
               Aucune categorie pour le moment.
@@ -205,15 +190,10 @@ export function CatalogListPanels({
             })}
           </Stack>
         </Stack>
-      </StorefrontCard>
+      )}
 
-      <StorefrontCard title="Produits stockes" theme={theme}>
+      {section === 'products' && (
         <Stack spacing={2}>
-          <SectionLead
-            title="Catalogue courant"
-            description="Les produits publies seront visibles sur les pages publiques."
-          />
-          <Divider />
           {!loading && products.length === 0 ? (
             <EmptyState theme={theme}>Aucun produit pour le moment.</EmptyState>
           ) : null}
@@ -345,7 +325,7 @@ export function CatalogListPanels({
             })}
           </Stack>
         </Stack>
-      </StorefrontCard>
-    </Box>
+      )}
+    </Stack>
   );
 }

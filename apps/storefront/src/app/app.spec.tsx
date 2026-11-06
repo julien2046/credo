@@ -183,11 +183,11 @@ describe('App', () => {
     renderRoute('/admin/products');
 
     await screen.findByRole('heading', {
-      name: /catalogue admin/i,
+      name: 'Produits',
     });
 
     expect(
-      await screen.findByText(/aucune organisation pour le moment/i)
+      await screen.findByRole('button', { name: 'Ajouter un produit' })
     ).toBeTruthy();
   });
 
@@ -205,7 +205,7 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'Mobilier' })
     ).toBeTruthy();
     expect(
-      screen.getByRole('link', { name: 'Voir le produit' }).getAttribute('href')
+      screen.getByRole('link', { name: 'Voir le produit : Chaise verte' }).getAttribute('href')
     ).toBe('/p/chaise-verte');
   });
 
@@ -238,7 +238,7 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'Connexion par SMS' })
     ).toBeTruthy();
     expect(
-      screen.queryByRole('heading', { name: /catalogue admin/i })
+      screen.queryByRole('heading', { name: 'Produits' })
     ).toBeNull();
   });
 
