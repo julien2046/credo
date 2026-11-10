@@ -137,6 +137,15 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('opens the cart from the storefront header', async () => {
+    renderRoute('/');
+    const cart = screen.getByRole('link', { name: 'Panier' });
+    expect(cart.getAttribute('href')).toBe('/cart');
+    fireEvent.click(cart);
+    expect(await screen.findByRole('heading', { name: 'Panier' })).toBeTruthy();
+    expect(cart.getAttribute('aria-current')).toBe('page');
+  });
+
   it('switches between the shop and merchant navigation', async () => {
     renderRoute('/');
     expect(screen.getByRole('navigation', { name: 'Boutique' })).toBeTruthy();

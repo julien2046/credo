@@ -23,6 +23,7 @@ import {
   useStorefrontAuth,
 } from '@credo/feature';
 import { ShopNavigation } from './shop-navigation';
+import { ShoppingBag } from 'lucide-react';
 
 /**
  * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
@@ -163,19 +164,34 @@ export function App({
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.paper', borderTop: 4, borderColor: 'primary.main' }}>
         <Container maxWidth="lg">
-          <Stack component="header" direction={{ xs: 'column', md: 'row' }} alignItems={{ md: 'center' }}
-            justifyContent="space-between" spacing={1} sx={{ py: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Box component="header" sx={{ display: 'grid',
+            gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 1fr) auto minmax(0, 1fr)' },
+            alignItems: 'center', columnGap: 2, rowGap: 1, pt: 2, pb: { xs: 1, md: 2 },
+            borderBottom: 1, borderColor: 'divider' }}>
             <Stack>
               {isAdminRoute && <Typography variant="overline" color="primary">Administration</Typography>}
               <Typography component={Link} to={isAdminRoute ? '/admin' : '/'} sx={{ fontFamily: theme.accentFontFamily, fontSize: 26,
-                fontWeight: 700, textDecoration: 'none', color: 'text.primary' }}>{clientConfig.brandName}</Typography>
+                fontWeight: 700, textDecoration: 'none', color: 'text.primary',
+                overflowWrap: 'anywhere', lineHeight: 1.2 }}>{clientConfig.brandName}</Typography>
             </Stack>
-            {!isAdminRoute && <ShopNavigation />}
-            <Button component={Link} variant="outlined" sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
-              to={isAdminRoute ? '/' : '/admin'}>
-              {isAdminRoute ? 'Voir la boutique' : 'Espace marchand'}
-            </Button>
-          </Stack>
+            {!isAdminRoute && (
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: '2' }, gridRow: { xs: 2, md: 1 } }}>
+                <ShopNavigation />
+              </Box>
+            )}
+            <Box sx={{ justifySelf: 'end', gridColumn: { xs: 2, md: 3 }, gridRow: 1 }}>
+              {isAdminRoute ? (
+                <Button component={Link} variant="outlined" to="/">Voir la boutique</Button>
+              ) : (
+                <Button component={NavLink} to="/cart" startIcon={<ShoppingBag size={20} />}
+                  sx={{ minHeight: 44, px: 2, borderRadius: '6px', color: 'text.primary',
+                    border: 1, borderColor: 'divider', whiteSpace: 'nowrap',
+                    '&.active': { bgcolor: 'action.selected', borderColor: 'primary.main' } }}>
+                  Panier
+                </Button>
+              )}
+            </Box>
+          </Box>
           {isAdminRoute && auth.status === 'signedIn' && (
             <Stack component="nav" aria-label="Administration" direction="row" flexWrap="wrap" sx={{ py: 1, gap: 0.5, borderBottom: 1, borderColor: 'divider', '& .active': { bgcolor: 'action.selected', color: 'text.primary' } }}>
               <Button component={NavLink} end to="/admin">Tableau de bord</Button>
@@ -192,6 +208,7 @@ export function App({
           <Stack component="footer" direction="row" alignItems="center" justifyContent="space-between"
             sx={{ py: 2, borderTop: 1, borderColor: 'divider' }}>
             <Typography variant="body2">{clientConfig.brandName}</Typography>
+            {!isAdminRoute && <Button component={Link} to="/admin" color="inherit">Espace marchand</Button>}
           </Stack>
         </Container>
       </Box>

@@ -3,6 +3,7 @@ import { Button, Menu, MenuItem, Stack } from '@mui/material';
 import { Link, NavLink, useLocation } from 'react-router';
 import { listPublicCategories, type PublicCategory } from '@credo/data-access';
 import { getDataClient } from '@credo/platform-amplify';
+import { ChevronDown } from 'lucide-react';
 
 export function ShopNavigation() {
   const id = useId();
@@ -38,7 +39,13 @@ export function ShopNavigation() {
       flexWrap="wrap"
       sx={{
         gap: { xs: 0, sm: 1 },
+        justifyContent: 'center',
+        '& .MuiButton-root': {
+          color: 'text.secondary', minHeight: 44, borderRadius: '4px',
+          px: { xs: 1, sm: 1.5 }, fontWeight: 500,
+        },
         '& .active': {
+          color: 'text.primary',
           textDecoration: 'underline',
           textUnderlineOffset: '4px',
         },
@@ -49,6 +56,7 @@ export function ShopNavigation() {
       </Button>
       <Button
         id={id}
+        endIcon={<ChevronDown size={16} />}
         aria-haspopup="menu"
         aria-expanded={Boolean(anchor)}
         aria-controls={anchor ? id + '-menu' : undefined}
@@ -93,9 +101,6 @@ export function ShopNavigation() {
       </Menu>
       <Button component={NavLink} to="/promo/summer">
         Promotions
-      </Button>
-      <Button component={NavLink} to="/cart">
-        Panier
       </Button>
     </Stack>
   );
