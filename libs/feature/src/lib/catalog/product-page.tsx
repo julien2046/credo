@@ -1,4 +1,6 @@
 import { Link as RouterLink } from 'react-router';
+import { useState } from 'react';
+import { useCart } from '../cart/cart-provider';
 import { Box, Button, Chip, Divider, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { formatPrice, type StorefrontTheme } from '@credo/shared';
@@ -12,6 +14,8 @@ export function ProductPage({
   content: StorefrontProductContent;
   theme: StorefrontTheme;
 }) {
+  const cart = useCart();
+  const [message, setMessage] = useState('');
   return (
     <StorefrontCard title={content.title} theme={theme}>
       <Box
@@ -72,9 +76,13 @@ export function ProductPage({
             ) : null}
           </Stack>
           <Divider />
-          <Button variant="contained" size="large" disabled={!content.inStock}>
+          <Button variant="contained" size="large"
+            disabled={!content.inStock || !cart.ready || content.currency !== cart.currency}
+            onClick={() => setMessage(cart.add(content) ? 'Produit ajouté au panier.' : 'Quantité maximale atteinte.')}>
             Ajouter au panier
           </Button>
+          {message && <Typography role="status">{message}</Typography>}
+          {cart.storageError && <Typography role="alert">Le panier ne sera pas conservé après fermeture.</Typography>}
         </Stack>
       </Box>
     </StorefrontCard>

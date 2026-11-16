@@ -7,6 +7,7 @@ import {
 } from 'react-router';
 import {
   Box,
+  Badge,
   Button,
   Container,
   CssBaseline,
@@ -20,10 +21,23 @@ import type {
 } from '@credo/shared';
 import {
   AuthCard,
+  CartProvider,
+  useCart,
   useStorefrontAuth,
 } from '@credo/feature';
 import { ShopNavigation } from './shop-navigation';
 import { ShoppingBag } from 'lucide-react';
+
+function CartButton() {
+  const { count } = useCart();
+  return <Button component={NavLink} to="/cart" aria-label="Panier"
+    startIcon={<Badge badgeContent={count} color="primary"><ShoppingBag size={20} /></Badge>}
+    sx={{ minHeight: 44, px: 2, borderRadius: '6px', color: 'text.primary',
+      border: 1, borderColor: 'divider', whiteSpace: 'nowrap',
+      '&.active': { bgcolor: 'action.selected', borderColor: 'primary.main' } }}>
+    Panier
+  </Button>;
+}
 
 /**
  * Composant racine storefront: routing public/admin + auth OTP + rendu thème.
@@ -161,6 +175,7 @@ export function App({
 
   return (
     <ThemeProvider theme={muiTheme}>
+      <CartProvider key={clientConfig.clientId + clientConfig.currency} clientId={clientConfig.clientId} currency={clientConfig.currency}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.paper', borderTop: 4, borderColor: 'primary.main' }}>
         <Container maxWidth="lg">
@@ -183,12 +198,7 @@ export function App({
               {isAdminRoute ? (
                 <Button component={Link} variant="outlined" to="/">Voir la boutique</Button>
               ) : (
-                <Button component={NavLink} to="/cart" startIcon={<ShoppingBag size={20} />}
-                  sx={{ minHeight: 44, px: 2, borderRadius: '6px', color: 'text.primary',
-                    border: 1, borderColor: 'divider', whiteSpace: 'nowrap',
-                    '&.active': { bgcolor: 'action.selected', borderColor: 'primary.main' } }}>
-                  Panier
-                </Button>
+                <CartButton />
               )}
             </Box>
           </Box>
@@ -212,6 +222,7 @@ export function App({
           </Stack>
         </Container>
       </Box>
+      </CartProvider>
     </ThemeProvider>
   );
 }

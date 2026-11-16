@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, Route, useParams } from 'react-router';
 import type { StorefrontTheme } from '@credo/shared';
 import { AdminCatalog } from '../admin/admin-catalog';
+import { CartPage } from '../cart/cart-page';
 import type { AuthState } from '../auth/auth.types';
 import { AdminGuard } from './admin-guard';
 import { RoutePlaceholder } from './route-placeholder';
@@ -52,11 +53,7 @@ export function renderStorefrontRoutes({
       <Route
         path="/cart"
         element={
-          <RoutePlaceholder
-            title="Panier"
-            details="Panier public. A garder dynamique ou a prerenderiser selon le besoin."
-            theme={theme}
-          />
+          <CartPage />
         }
       />
 

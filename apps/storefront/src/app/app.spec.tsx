@@ -1,4 +1,4 @@
-import { cleanup, render, screen, act, fireEvent } from '@testing-library/react';
+import { cleanup, render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { clientConfigClientA } from '@credo/client-config-client-a';
 import { clientATheme } from '@credo/themes-client-a';
@@ -104,6 +104,7 @@ function renderRoute(path: string) {
 }
 
 beforeEach(() => {
+  localStorage.clear();
   catalog.categories.mockResolvedValue({
     data: {
       items: [
@@ -137,6 +138,42 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('does not offer adding an out-of-stock product', async () => {
+    catalog.products.mockResolvedValue({ data: { items: [{
+      id: 'p1', name: 'Chaise verte', slug: 'chaise-verte', price: 25,
+      currency: 'CAD', categoryId: 'c1', inStock: false,
+    }], nextToken: null } });
+    renderRoute('/p/chaise-verte');
+    expect((await screen.findByRole('button', { name: 'Ajouter au panier' })).hasAttribute('disabled')).toBe(true);
+  });
+
+  it('does not read another shop cart', async () => {
+    localStorage.setItem('credo:cart:v1:client-b', JSON.stringify([{
+      id: 'p1', title: 'Autre boutique', slug: 'autre', price: 25, currency: 'CAD', quantity: 1,
+    }]));
+    renderRoute('/cart');
+    expect(await screen.findByText('Votre panier est vide.')).toBeTruthy();
+  });
+
+  it('adds, changes quantity, restores and removes a cart item', async () => {
+    renderRoute('/p/chaise-verte');
+    const add = await screen.findByRole('button', { name: 'Ajouter au panier' });
+    await waitFor(() => expect(add.hasAttribute('disabled')).toBe(false));
+    fireEvent.click(add);
+    expect(await screen.findByRole('status')).toHaveProperty('textContent', 'Produit ajouté au panier.');
+    fireEvent.click(screen.getByRole('link', { name: 'Panier' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Augmenter : Chaise verte' }));
+    expect(screen.getByLabelText('Quantité : Chaise verte').textContent).toBe('2');
+    expect(JSON.parse(localStorage.getItem('credo:cart:v1:client-a') ?? '[]')[0].quantity).toBe(2);
+    cleanup();
+    renderRoute('/cart');
+    expect((await screen.findByLabelText('Quantité : Chaise verte')).textContent).toBe('2');
+    fireEvent.click(screen.getByRole('button', { name: 'Diminuer : Chaise verte' }));
+    expect(screen.getByLabelText('Quantité : Chaise verte').textContent).toBe('1');
+    fireEvent.click(screen.getByRole('button', { name: 'Retirer : Chaise verte' }));
+    expect(await screen.findByText('Votre panier est vide.')).toBeTruthy();
+  });
+
   it('opens the cart from the storefront header', async () => {
     renderRoute('/');
     const cart = screen.getByRole('link', { name: 'Panier' });
