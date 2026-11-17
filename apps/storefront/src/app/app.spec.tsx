@@ -138,6 +138,47 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('refreshes saved prices and reports withdrawn products', async () => {
+    localStorage.setItem('credo:cart:v1:client-a', JSON.stringify([
+      { id: 'p1', title: 'Chaise verte', slug: 'ancien', price: 10, currency: 'CAD', quantity: 2 },
+      { id: 'deleted', title: 'Produit retiré', slug: 'retire', price: 100, currency: 'CAD', quantity: 1 },
+    ]));
+    renderRoute('/cart');
+    expect(await screen.findByText(/Prix actualisé : ancien prix/)).toBeTruthy();
+    expect(screen.getByText('Produit indisponible, exclu du sous-total.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Augmenter : Produit retiré' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('link', { name: 'Chaise verte' }).getAttribute('href')).toBe('/p/chaise-verte');
+    await waitFor(() => expect(JSON.parse(localStorage.getItem('credo:cart:v1:client-a') ?? '[]')[0].price).toBe(25));
+  });
+
+  it('preserves the cart on a network error and permits retrying', async () => {
+    localStorage.setItem('credo:cart:v1:client-a', JSON.stringify([
+      { id: 'p1', title: 'Chaise verte', slug: 'chaise-verte', price: 10, currency: 'CAD', quantity: 2 },
+    ]));
+    catalog.products.mockRejectedValueOnce(new Error('offline'));
+    renderRoute('/cart');
+    expect(await screen.findByText(/Impossible de vérifier le catalogue/)).toBeTruthy();
+    expect(screen.getByLabelText('Quantité : Chaise verte').textContent).toBe('2');
+    expect(JSON.parse(localStorage.getItem('credo:cart:v1:client-a') ?? '[]')[0].price).toBe(10);
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser le panier' }));
+    expect(await screen.findByText(/Prix actualisé : ancien prix/)).toBeTruthy();
+    expect(screen.queryByText(/Impossible de vérifier le catalogue/)).toBeNull();
+  });
+
+  it('does not restore a removed line when a pending verification completes', async () => {
+    localStorage.setItem('credo:cart:v1:client-a', JSON.stringify([
+      { id: 'p1', title: 'Chaise verte', slug: 'chaise-verte', price: 10, currency: 'CAD', quantity: 2 },
+    ]));
+    let finish!: (value: unknown) => void;
+    catalog.products.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    renderRoute('/cart');
+    await screen.findByText('Vérification des prix et disponibilités...');
+    fireEvent.click(screen.getByRole('button', { name: 'Retirer : Chaise verte' }));
+    await act(async () => finish({ data: { items: [], nextToken: null } }));
+    expect(screen.getByText('Votre panier est vide.')).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem('credo:cart:v1:client-a') ?? '[]')).toEqual([]);
+  });
+
   it('does not offer adding an out-of-stock product', async () => {
     catalog.products.mockResolvedValue({ data: { items: [{
       id: 'p1', name: 'Chaise verte', slug: 'chaise-verte', price: 25,
