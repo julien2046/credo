@@ -4,6 +4,22 @@ Le panier est sauvegarde par client dans le navigateur. Il ne constitue pas une
 commande et ses montants ne doivent jamais etre utilises directement pour creer
 un paiement.
 
+## Livraison de demonstration
+
+Un panier verifie dont tous les articles sont disponibles donne acces a
+`/checkout`. La page reverifie le catalogue avant de proposer une estimation.
+Les deux clients de demonstration ont un forfait de **9,95 $ CA**, configurable
+avec `delivery.quebecFlatRateCents` dans leur configuration respective. Sans
+configuration valide en CAD, la livraison est desactivee.
+
+Le formulaire verifie le courriel, les champs requis et le code postal. Seuls les
+codes du Quebec sont acceptes (G, H, J, selon les
+[directives de Postes Canada](https://www.canadapost-postescanada.ca/scp/fr/soutien/sujet/directives-adressage/codes-postaux.page)).
+Cela ne confirme pas que l'adresse existe. Le total est une estimation avant
+taxes. Les coordonnees restent en memoire dans le formulaire, sans requete,
+sauvegarde ni creation de commande. Aucun paiement ou retrait en boutique
+n'est active. Faire confirmer la zone et le tarif avant la mise en vente.
+
 ## Verification du catalogue
 
 A chaque ouverture du panier, les produits publics sont relus via la requete

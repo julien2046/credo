@@ -213,7 +213,7 @@ export function App({
           )}
           <Box component="main" aria-busy={navigation.state === 'loading'} sx={{ py: { xs: 3, md: 5 }, minHeight: '65vh' }}>
             {navigation.state === 'loading' && <Typography role="status">Chargement...</Typography>}
-            <Outlet context={{ auth, currency: clientConfig.currency, signInNode, theme }} />
+            <Outlet context={{ auth, currency: clientConfig.currency, delivery: clientConfig.delivery, signInNode, theme }} />
           </Box>
           <Stack component="footer" direction="row" alignItems="center" justifyContent="space-between"
             sx={{ py: 2, borderTop: 1, borderColor: 'divider' }}>

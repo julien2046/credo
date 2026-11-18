@@ -7,6 +7,7 @@ export const clientConfigClientA: StorefrontClientConfig = {
   brandTagline: 'Boutique e-commerce de reference pour valider le socle produit.',
   locale: 'fr-CA',
   currency: 'CAD',
+  delivery: { quebecFlatRateCents: 995 },
   enabledChannels: ['instagram', 'newsletter'],
   styleGuide: 'Editorial premium, produits mis en avant avec un ton rassurant.',
   domainLabel: 'demo.credo.local',

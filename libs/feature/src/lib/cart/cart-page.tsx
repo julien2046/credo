@@ -6,7 +6,7 @@ import { formatPrice } from '@credo/shared';
 import { useCart } from './cart-provider';
 import { MAX_QUANTITY } from './cart-state';
 
-export function CartPage() {
+export function CartPage({ deliveryEnabled }: { deliveryEnabled: boolean }) {
   const cart = useCart();
   const { ready, refresh } = cart;
   useEffect(() => {
@@ -49,7 +49,17 @@ export function CartPage() {
         <Stack spacing={1} sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }} alignItems="flex-end">
           <Typography variant="h6">{cart.verification === 'verified' ? 'Sous-total disponible' : 'Sous-total non confirmé'} : {formatPrice(cart.total, cart.currency)}</Typography>
           <Typography variant="body2" color="text.secondary">Hors taxes et livraison. Prix et disponibilités à confirmer.</Typography>
-          <Typography variant="body2">Le paiement en ligne n’est pas encore disponible.</Typography>
+          {deliveryEnabled ? (
+            cart.canProceed ? (
+              <Button component={Link} to="/checkout" variant="contained">
+                Continuer vers la livraison
+              </Button>
+            ) : (
+              <Button variant="contained" disabled>Continuer vers la livraison</Button>
+            )
+          ) : (
+            <Typography variant="body2">La livraison en ligne n’est pas encore disponible.</Typography>
+          )}
           <Button component={Link} to="/">Continuer mes achats</Button>
         </Stack>
       </>}

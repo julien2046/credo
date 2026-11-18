@@ -7,6 +7,7 @@ export const clientConfigClientB: StorefrontClientConfig = {
   brandTagline: 'Variation client pour valider le single-tenant avec une identite distincte.',
   locale: 'fr-CA',
   currency: 'CAD',
+  delivery: { quebecFlatRateCents: 995 },
   enabledChannels: ['facebook', 'newsletter'],
   styleGuide: 'Ton direct, plus commerce de proximite, mise en avant du panier.',
   domainLabel: 'maison-nord.local',

@@ -11,6 +11,7 @@ type CartContextValue = {
   currency: string;
   count: number;
   total: number;
+  canProceed: boolean;
   verification: 'idle' | 'checking' | 'verified' | 'error';
   refresh: () => Promise<void>;
   add: (product: StorefrontProductContent) => boolean;
@@ -65,6 +66,8 @@ export function CartProvider({ clientId, currency, children }: {
 
   return <CartContext.Provider value={{
     items, ready, storageError, currency, total: cartTotal(items), verification, refresh,
+    canProceed: ready && verification === 'verified' && items.length > 0 &&
+      items.every(item => item.availability === 'available'),
     count: items.reduce((count, item) => count + item.quantity, 0),
     add,
     setQuantity: (id, quantity) => {

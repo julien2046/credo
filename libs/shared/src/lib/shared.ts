@@ -4,6 +4,10 @@ export type ClientId = (typeof clientIds)[number];
 export type ThemeId = ClientId;
 export type EnabledChannel = 'instagram' | 'facebook' | 'newsletter';
 
+export type StorefrontDeliveryConfig = {
+  quebecFlatRateCents: number;
+};
+
 export type StorefrontClientConfig = {
   clientId: ClientId;
   themeId: ThemeId;
@@ -11,6 +15,7 @@ export type StorefrontClientConfig = {
   brandTagline: string;
   locale: string;
   currency: string;
+  delivery?: StorefrontDeliveryConfig;
   enabledChannels: EnabledChannel[];
   styleGuide: string;
   domainLabel: string;

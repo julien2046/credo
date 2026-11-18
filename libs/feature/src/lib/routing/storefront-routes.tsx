@@ -1,9 +1,11 @@
 import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { Link, Route, useParams } from 'react-router';
-import type { StorefrontTheme } from '@credo/shared';
+import type { StorefrontDeliveryConfig, StorefrontTheme } from '@credo/shared';
 import { AdminCatalog } from '../admin/admin-catalog';
 import { CartPage } from '../cart/cart-page';
+import { DeliveryPage } from '../checkout/delivery-page';
+import { getDeliveryFeeCents } from '../checkout/delivery-estimate';
 import type { AuthState } from '../auth/auth.types';
 import { AdminGuard } from './admin-guard';
 import { RoutePlaceholder } from './route-placeholder';
@@ -15,6 +17,7 @@ type PublicPageProps = { theme: StorefrontTheme };
 export type RenderStorefrontRoutesProps = {
   auth: AuthState;
   currency: string;
+  delivery?: StorefrontDeliveryConfig;
   signInNode: ReactNode;
   theme: StorefrontTheme;
 };
@@ -44,18 +47,16 @@ function PromoPage({ theme }: PublicPageProps) {
 export function renderStorefrontRoutes({
   auth,
   currency,
+  delivery,
   signInNode,
   theme,
 }: RenderStorefrontRoutesProps) {
+  const deliveryFeeCents = getDeliveryFeeCents(delivery, currency);
   return (
     <>
       <Route path="/promo/:promoSlug" element={<PromoPage theme={theme} />} />
-      <Route
-        path="/cart"
-        element={
-          <CartPage />
-        }
-      />
+      <Route path="/cart" element={<CartPage deliveryEnabled={deliveryFeeCents !== null} />} />
+      <Route path="/checkout" element={<DeliveryPage feeCents={deliveryFeeCents} />} />
 
       <Route
         path="/admin"

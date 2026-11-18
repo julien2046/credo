@@ -138,6 +138,56 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('App', () => {
+  it('validates delivery details and estimates the total without storing customer data', async () => {
+    localStorage.setItem('credo:cart:v1:client-a', JSON.stringify([
+      { id: 'p1', title: 'Chaise verte', slug: 'chaise-verte', price: 25, currency: 'CAD', quantity: 2 },
+    ]));
+    const router = renderRoute('/cart');
+    fireEvent.click(await screen.findByRole('link', { name: 'Continuer vers la livraison' }));
+    const estimate = await screen.findByRole('button', { name: 'Estimer les frais' });
+    expect(router.state.location.pathname).toBe('/checkout');
+
+    fireEvent.click(estimate);
+    expect((await screen.findAllByText('Ce champ est requis.')).length).toBe(5);
+
+    function fill(label: RegExp, value: string) {
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    }
+    fill(/^Courriel/, 'client@example.com');
+    fill(/^Nom complet/, 'Client Test');
+    fill(/^Adresse/, '10 rue Exemple');
+    fill(/^Ville/, 'Montréal');
+    fill(/^Code postal/, 'M5V 3A8');
+    fireEvent.click(estimate);
+    expect(await screen.findByText('La livraison est limitée au Québec.')).toBeTruthy();
+    expect(screen.queryByText('Total estimé avant taxes')).toBeNull();
+
+    fill(/^Code postal/, 'h2x1y4');
+    fireEvent.click(estimate);
+    expect(await screen.findByText('Total estimé avant taxes')).toBeTruthy();
+    expect(screen.getByText(/59,95/)).toBeTruthy();
+    expect(localStorage.getItem('credo:cart:v1:client-a')).not.toContain('client@example.com');
+    expect(router.state.location.search).toBe('');
+
+    fill(/^Ville/, 'Québec');
+    expect(screen.queryByText('Total estimé avant taxes')).toBeNull();
+  });
+
+  it('rechecks the catalogue on direct visits and blocks unavailable carts', async () => {
+    localStorage.setItem('credo:cart:v1:client-a', JSON.stringify([
+      { id: 'withdrawn', title: 'Produit retiré', slug: 'retire', price: 25, currency: 'CAD', quantity: 1 },
+    ]));
+    renderRoute('/checkout');
+    expect(await screen.findByText('Retirez les articles indisponibles du panier pour continuer.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Estimer les frais' })).toBeNull();
+  });
+
+  it('shows a return link when checkout has no items', async () => {
+    renderRoute('/checkout');
+    expect(await screen.findByText('Votre panier est vide.')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Retour au panier' }).getAttribute('href')).toBe('/cart');
+  });
+
   it('refreshes saved prices and reports withdrawn products', async () => {
     localStorage.setItem('credo:cart:v1:client-a', JSON.stringify([
       { id: 'p1', title: 'Chaise verte', slug: 'ancien', price: 10, currency: 'CAD', quantity: 2 },
