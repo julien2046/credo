@@ -1,6 +1,28 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { checkout } from '../functions/checkout/resource';
 
 const schema = a.schema({
+  CheckoutQuote: a.customType({
+    quoteId: a.string().required(),
+    subtotalCents: a.integer().required(),
+    deliveryCents: a.integer().required(),
+    totalCents: a.integer().required(),
+    paymentEnabled: a.boolean().required(),
+  }),
+  quoteCheckout: a.query()
+    .arguments({ cart: a.string().required(), postalCode: a.string().required() })
+    .returns(a.ref('CheckoutQuote'))
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(a.handler.function(checkout)),
+  startTestCheckout: a.mutation()
+    .arguments({
+      cart: a.string().required(), delivery: a.string().required(),
+      quoteId: a.string().required(), attemptId: a.string().required(),
+    })
+    .returns(a.string())
+    .authorization((allow) => [allow.publicApiKey()])
+    .handler(a.handler.function(checkout)),
+
   Organization: a
     .model({
       name: a.string().required(),

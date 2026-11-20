@@ -20,6 +20,7 @@ const fields = [
 ] as const;
 
 type DeliveryField = (typeof fields)[number]['name'];
+export type DeliveryDetails = Record<DeliveryField, string>;
 
 function validateField(name: DeliveryField, value: string): true | string {
   const input = value.trim();
@@ -32,9 +33,15 @@ function validateField(name: DeliveryField, value: string): true | string {
 }
 
 export function DeliveryForm({
-  onEstimateChange,
+  onEstimate,
+  onEdit,
+  estimating,
+  paying,
 }: {
-  onEstimateChange: (estimated: boolean) => void;
+  onEstimate: (details: DeliveryDetails) => void;
+  onEdit: () => void;
+  estimating: boolean;
+  paying: boolean;
 }) {
   const {
     register,
@@ -47,10 +54,7 @@ export function DeliveryForm({
       component="form"
       noValidate
       spacing={2}
-      onSubmit={handleSubmit(
-        () => onEstimateChange(true),
-        () => onEstimateChange(false)
-      )}
+      onSubmit={handleSubmit(onEstimate, onEdit)}
     >
       <Typography component="h2" variant="h6">
         Coordonnées de livraison
@@ -71,13 +75,14 @@ export function DeliveryForm({
         {fields.map((field) => {
           const { ref, ...input } = register(field.name, {
             validate: (value) => validateField(field.name, value),
-            onChange: () => onEstimateChange(false),
+            onChange: onEdit,
           });
           return (
             <TextField
               key={field.name}
               {...input}
               inputRef={ref}
+              disabled={paying}
               label={field.label}
               type={'type' in field ? field.type : 'text'}
               autoComplete={field.autoComplete}
@@ -95,10 +100,11 @@ export function DeliveryForm({
       </Box>
       <Button
         type="submit"
+        disabled={estimating || paying}
         variant="contained"
         sx={{ alignSelf: 'flex-start' }}
       >
-        Estimer les frais
+        {estimating ? 'Estimation en cours…' : 'Estimer les frais'}
       </Button>
     </Stack>
   );

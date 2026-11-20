@@ -21,13 +21,17 @@ import { getCurrentUser } from 'aws-amplify/auth';
 const catalog = vi.hoisted(() => ({
   categories: vi.fn(),
   products: vi.fn(),
+  quote: vi.fn(),
+  pay: vi.fn(),
 }));
 
 vi.mock('aws-amplify/data', () => ({
   generateClient: () => ({
+    mutations: { startTestCheckout: catalog.pay },
     queries: {
       listPublicCategoryPage: catalog.categories,
       listPublicProductPage: catalog.products,
+      quoteCheckout: catalog.quote,
     },
     models: {
       Organization: {
@@ -105,6 +109,10 @@ function renderRoute(path: string) {
 
 beforeEach(() => {
   localStorage.clear();
+  catalog.quote.mockReset().mockResolvedValue({ data: {
+    subtotalCents: 5400, deliveryCents: 995, totalCents: 6395, quoteId: 'test-quote', paymentEnabled: true,
+  } });
+  catalog.pay.mockReset();
   catalog.categories.mockResolvedValue({
     data: {
       items: [
@@ -165,12 +173,32 @@ describe('App', () => {
     fill(/^Code postal/, 'h2x1y4');
     fireEvent.click(estimate);
     expect(await screen.findByText('Total estimé avant taxes')).toBeTruthy();
-    expect(screen.getByText(/59,95/)).toBeTruthy();
+    expect(screen.getByText(/63,95/)).toBeTruthy();
+    expect(catalog.quote).toHaveBeenCalledWith({
+      cart: JSON.stringify([{ id: 'p1', quantity: 2 }]), postalCode: 'h2x1y4',
+    }, { authMode: 'apiKey' });
+    const pay = screen.getByRole('button', { name: 'Payer en mode test' });
+    catalog.pay.mockResolvedValueOnce({ errors: [{ message: 'QUOTE_CHANGED' }] });
+    fireEvent.click(pay);
+    expect(await screen.findByText(/Le panier a changé/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Payer en mode test' })).toBeNull();
+    expect(catalog.pay.mock.calls[0][0]).toMatchObject({
+      quoteId: 'test-quote', cart: JSON.stringify([{ id: 'p1', quantity: 2 }]),
+      delivery: expect.stringContaining('client@example.com'),
+    });
+    fireEvent.click(estimate);
+    await screen.findByRole('button', { name: 'Payer en mode test' });
     expect(localStorage.getItem('credo:cart:v1:client-a')).not.toContain('client@example.com');
     expect(router.state.location.search).toBe('');
 
     fill(/^Ville/, 'Québec');
     expect(screen.queryByText('Total estimé avant taxes')).toBeNull();
+  });
+
+  it.each(['/checkout/retour', '/checkout/annule'])('never treats a return URL as a paid order: %s', async path => {
+    renderRoute(path);
+    expect(await screen.findByText(/Aucune commande créée/)).toBeTruthy();
+    expect(catalog.pay).not.toHaveBeenCalled();
   });
 
   it('rechecks the catalogue on direct visits and blocks unavailable carts', async () => {

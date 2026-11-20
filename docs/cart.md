@@ -16,9 +16,10 @@ Le formulaire verifie le courriel, les champs requis et le code postal. Seuls le
 codes du Quebec sont acceptes (G, H, J, selon les
 [directives de Postes Canada](https://www.canadapost-postescanada.ca/scp/fr/soutien/sujet/directives-adressage/codes-postaux.page)).
 Cela ne confirme pas que l'adresse existe. Le total est une estimation avant
-taxes. Les coordonnees restent en memoire dans le formulaire, sans requete,
-sauvegarde ni creation de commande. Aucun paiement ou retrait en boutique
-n'est active. Faire confirmer la zone et le tarif avant la mise en vente.
+taxes. Le serveur reçoit les identifiants, les quantités et le code postal
+pour l'estimation. Le nom, le courriel et l'adresse ne sont transmis au
+serveur puis à Stripe qu'au clic sur « Payer en mode test ». La boutique
+ne les conserve pas dans le panier local.
 
 ## Verification du catalogue
 
@@ -37,8 +38,55 @@ paginee existante. Le bouton "Actualiser le panier" relance cette verification.
 
 Le stock actuel est un indicateur disponible/rupture, pas une quantite reservee.
 La limite de 99 unites par ligne est une limite d'interface, pas un stock garanti.
-La verification reste cote navigateur. Le futur checkout devra recalculer et
-valider le panier cote serveur, avec taxes, livraison et disponibilites.
+Au checkout, le serveur relit la table Product du client, en lecture cohérente,
+une fois pour l'estimation et une seconde fois avant Stripe. Il refuse les
+lignes en double, non publiées, en rupture, hors CAD ou invalides. Il accepte
+1 à 50 produits distincts et 1 à 99 unités par ligne. Les prix et le forfait
+proviennent uniquement du catalogue et de la configuration serveur du client.
+
+## Tester Stripe Checkout pour client-a
+
+Depuis la racine, enregistrer une **clé secrète Stripe de test** (`sk_test_...`)
+à l'invite, jamais dans le code, un fichier public, une variable `VITE_*` ou le chat :
+
+```sh
+npx ampx sandbox secret set STRIPE_TEST_SECRET_KEY --profile julie-credo --identifier client-a
+```
+
+Terminal 1 : lancer le backend de test de ce même client. L'origine est celle
+de la boutique à laquelle Stripe doit revenir, sans chemin ni paramètres :
+
+```sh
+CLIENT_ID=client-a CHECKOUT_RETURN_ORIGIN=http://localhost:4200 npx ampx sandbox --profile julie-credo --identifier client-a
+```
+
+Terminal 2 : après la mise à jour de `amplify_outputs.json`, lancer ou relancer
+`npm run dev:client-a` et ouvrir [la boutique](http://localhost:4200).
+
+1. Ajouter deux unités d'un produit publié à 25 $ CA. Remplir la livraison avec des données fictives et le code postal H2X 1Y4. L'estimation attendue est de 59,95 $ CA, livraison incluse, hors taxes.
+2. Après l'estimation, modifier le prix dans un autre onglet marchand. « Payer en mode test » doit demander une nouvelle estimation **sans** ouvrir Stripe. Passer le produit en rupture doit aussi empêcher le paiement.
+3. Rendre le produit disponible, refaire l'estimation et ouvrir Stripe. Comparer les lignes et le total. Annuler : retour à la boutique, panier intact.
+4. Refaire le parcours avec une [carte de test Stripe](https://docs.stripe.com/testing). Vérifier le résultat dans l'environnement de test Stripe. Le retour à la boutique ne confirme aucun paiement et ne crée aucune commande.
+
+Sans `CHECKOUT_RETURN_ORIGIN`, le devis fonctionne pour un `CLIENT_ID`
+configuré mais le bouton Stripe reste masqué. En hébergement de test,
+utiliser une origine HTTPS et un secret Amplify propres à la branche :
+[gestion des secrets](https://docs.amplify.aws/react/build-a-backend/functions/environment-variables-and-secrets/).
+Le navigateur utilise les opérations AppSync `quoteCheckout` et
+`startTestCheckout`, pas une route React ni une clé Stripe.
+Les tentatives répétées d'une même validation utilisent une
+[clé d'idempotence Stripe](https://docs.stripe.com/api/idempotent_requests).
+
+**Limites :** test uniquement, pas de réservation de stock, de taxes, de
+webhook ni de commande. Avant la vente réelle : restreindre les mutations
+catalogue aux marchands, limiter les tentatives, valider zone/tarifs/taxes
+et traiter les confirmations Stripe signées de façon idempotente.
+
+Test automatisé du calcul et du passage à Stripe (sans réseau ni secret) :
+
+```sh
+npm exec -- nx run @credo/amplify-backend:test
+```
 
 ## Test manuel en sandbox
 

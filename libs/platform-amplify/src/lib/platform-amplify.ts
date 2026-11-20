@@ -115,8 +115,22 @@ type DeleteInput = {
   id: string;
 };
 
+export type CheckoutQuote = {
+  quoteId: string;
+  subtotalCents: number;
+  deliveryCents: number;
+  totalCents: number;
+  paymentEnabled: boolean;
+};
+
 export type DataClient = {
+  mutations: {
+    startTestCheckout: (input: {
+      cart: string; delivery: string; quoteId: string; attemptId: string;
+    }, options: QueryOptions) => CreateResult<string>;
+  };
   queries: {
+    quoteCheckout: (input: { cart: string; postalCode: string }, options: QueryOptions) => CreateResult<CheckoutQuote>;
     listPublicCategoryPage: (
       input: { nextToken?: string | null },
       options?: QueryOptions

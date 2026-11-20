@@ -1,0 +1,14 @@
+{
+  "name": "@credo/amplify-backend",
+  "targets": {
+    "test": {
+      "command": "node --import tsx --test amplify/functions/checkout/checkout.test.ts",
+      "cache": true,
+      "inputs": ["default", "^default"]
+    },
+    "typecheck": {
+      "options": { "command": "tsc --noEmit -p tsconfig.json" },
+      "outputs": []
+    }
+  }
+}

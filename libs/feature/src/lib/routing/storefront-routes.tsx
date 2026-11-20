@@ -4,7 +4,7 @@ import { Link, Route, useParams } from 'react-router';
 import type { StorefrontDeliveryConfig, StorefrontTheme } from '@credo/shared';
 import { AdminCatalog } from '../admin/admin-catalog';
 import { CartPage } from '../cart/cart-page';
-import { DeliveryPage } from '../checkout/delivery-page';
+import { CheckoutReturn, DeliveryPage } from '../checkout/delivery-page';
 import { getDeliveryFeeCents } from '../checkout/delivery-estimate';
 import type { AuthState } from '../auth/auth.types';
 import { AdminGuard } from './admin-guard';
@@ -57,6 +57,8 @@ export function renderStorefrontRoutes({
       <Route path="/promo/:promoSlug" element={<PromoPage theme={theme} />} />
       <Route path="/cart" element={<CartPage deliveryEnabled={deliveryFeeCents !== null} />} />
       <Route path="/checkout" element={<DeliveryPage feeCents={deliveryFeeCents} />} />
+      <Route path="/checkout/retour" element={<CheckoutReturn cancelled={false} />} />
+      <Route path="/checkout/annule" element={<CheckoutReturn cancelled />} />
 
       <Route
         path="/admin"

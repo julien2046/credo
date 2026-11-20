@@ -9,9 +9,18 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "$amplify/*": [
-        "../.amplify/generated/*"
-      ]
+      "$amplify/*": ["../.amplify/generated/*"]
     }
-  }
+  },
+  "references": [
+    {
+      "path": "../libs/client-config/client-b"
+    },
+    {
+      "path": "../libs/client-config/client-a"
+    },
+    {
+      "path": "../libs/shared"
+    }
+  ]
 }
