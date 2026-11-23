@@ -197,7 +197,7 @@ describe('App', () => {
 
   it.each(['/checkout/retour', '/checkout/annule'])('never treats a return URL as a paid order: %s', async path => {
     renderRoute(path);
-    expect(await screen.findByText(/Aucune commande créée/)).toBeTruthy();
+    expect(await screen.findByText(/Votre panier est conservé/)).toBeTruthy();
     expect(catalog.pay).not.toHaveBeenCalled();
   });
 

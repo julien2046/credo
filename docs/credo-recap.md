@@ -1,6 +1,6 @@
 # Credo — Synthèse Produit, Architecture Et Roadmap
 
-Mise à jour du parcours d'achat : 20 novembre 2026.
+Mise à jour du parcours d'achat : 23 novembre 2026.
 
 Document consolidé à partir des notes, du code local et des validations rapportées dans le projet. Les ressources AWS et les déploiements actuels n’ont pas été audités lors de cette mise à jour. « Réalisé » ne signifie pas « prêt pour la production ».
 
@@ -10,7 +10,8 @@ Document consolidé à partir des notes, du code local et des validations rappor
 - À sécuriser : autorisations marchands côté backend, stockage et frontend.
 - À valider sur AWS : règles de routage, fichiers statiques, SEO et configuration de chaque client.
 - Parcours d’achat : panier persistant, estimation serveur et Stripe Checkout en mode test. Essai de bout en bout avec le compte de test du marchand à faire.
-- À développer : confirmation par webhook, commandes, compte client, rebuild automatique et marketing.
+- En place côté serveur : création d'une commande de test payée sur notification Stripe signée, sans doublon.
+- À développer : consultation des commandes, compte client, rebuild automatique et marketing.
 
 
 ## 1. Vision Produit
@@ -313,11 +314,11 @@ Procédure détaillée : [Routage et SEO](storefront-routing.md).
 
 Parcours cible : panier avec quantités → validation serveur des produits/prix/disponibilités → paiement Stripe → webhook signé → confirmation de la commande payée.
 
-Les montants sont recalculés avant la redirection. Les clés Stripe réelles sont refusées. La boutique ne calcule pas les taxes et ne crée pas encore de commande ; le retour de Stripe n'est pas une preuve de paiement.
+Les montants sont recalculés avant la redirection. Les clés Stripe réelles sont refusées. La boutique ne calcule pas les taxes. Le webhook enregistre la commande payée dans DynamoDB ; le retour de Stripe n'est pas une preuve de paiement.
 
 Exigences : ne jamais faire confiance aux montants client, vérifier la signature du webhook, rendre le traitement idempotent pour éviter les doublons, gérer les paiements échoués ou différés. Une commande en attente peut exister avant paiement ; elle ne passe en PAID qu’après confirmation fiable.
 
-Les endpoints `/api/checkout/...`, `/api/stripe/webhook`, `/api/openai/...` et une éventuelle API de stock doivent être de vrais endpoints backend, pas de simples routes React.
+Le checkout utilise AppSync ; `POST /api/stripe/webhook` utilise l'URL API Gateway du déploiement. Les futures API IA et stock devront aussi vivre côté serveur.
 
 Compte client prévu : `/account/orders`, `/account/orders/:id`, `/account/profile`. Autoriser l’accès par identité authentifiée/propriétaire. Pour une commande invitée, un email saisi seul ne suffit pas : prévoir un lien signé ou une vérification de possession.
 
@@ -620,7 +621,7 @@ Les anciens jalons mensuels ne sont plus un calendrier d’engagement. Les repla
 4. Concevoir puis implémenter le regroupement des changements et le rebuild automatique.
 5. Pré-rendre le contenu de l’accueil pour éviter que sa sélection dépende uniquement du navigateur.
 6. Valider le paiement Stripe de test sur la boutique de démonstration, y compris les changements de prix, la rupture et l’annulation.
-7. Ajouter commandes et espace client, puis PromotionEvent et les outils marketing.
+7. Ajouter la consultation des commandes avec ses contrôles d'accès, puis PromotionEvent et les outils marketing.
 
 Le catalogue de base n’est plus à démarrer. Les prochaines étapes portent sur sa sécurité, sa publication fiable et le parcours d’achat.
 
@@ -628,6 +629,6 @@ Le catalogue de base n’est plus à démarrer. Les prochaines étapes portent s
 
 Credo dispose maintenant d’un catalogue fonctionnel, d’une boutique avec cartes produits, d’un backoffice distinct et d’un pré-rendu natif produit/catégorie avec les fichiers SEO.
 
-La plateforme n’est pas prête à encaisser en production : rôles marchands, validation du déploiement, rebuild automatique, taxes, confirmation de paiement et commandes restent à traiter.
+La plateforme n’est pas prête à encaisser en production : rôles marchands, validation du déploiement, rebuild automatique, taxes et suivi des commandes restent à traiter.
 
 La vision reste inchangée : un produit partagé, une identité par client et des déploiements AWS séparés. Le socle catalogue est là ; il faut maintenant sécuriser l’administration et fiabiliser la mise en ligne avant d’ouvrir la vente.

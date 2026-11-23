@@ -15,7 +15,7 @@ export const checkout = defineFunction({
     DELIVERY_CENTS: String(
       shop?.currency === 'CAD' ? shop.delivery?.quebecFlatRateCents : ''
     ),
-    ...(shop && origin
+    ...(shop && origin && process.env.STRIPE_ORDERS_ENABLED === 'true'
       ? {
           CHECKOUT_RETURN_ORIGIN: origin,
           STRIPE_TEST_SECRET_KEY: secret('STRIPE_TEST_SECRET_KEY'),

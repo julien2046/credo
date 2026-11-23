@@ -24,7 +24,8 @@ export function sessionRequest(
   quote: PricedCart,
   d: Delivery,
   origin: string,
-  attempt: string
+  attempt: string,
+  scope: string
 ) {
   const params: Stripe.Checkout.SessionCreateParams = {
     mode: 'payment',
@@ -35,7 +36,7 @@ export function sessionRequest(
     success_url: origin + '/checkout/retour',
     cancel_url: origin + '/checkout/annule',
     customer_email: d.email,
-    metadata: { quoteId: quote.quoteId },
+    metadata: { quoteId: quote.quoteId, credoScope: scope },
     payment_intent_data: {
       shipping: {
         name: d.name,
@@ -63,7 +64,10 @@ export function sessionRequest(
         price_data: {
           currency: 'cad',
           unit_amount: quote.deliveryCents,
-          product_data: { name: 'Livraison au Québec' },
+          product_data: {
+            name: 'Livraison au Québec',
+            metadata: { kind: 'delivery' },
+          },
         },
       },
     ],
@@ -77,7 +81,8 @@ export async function openStripe(
   attempt: string
 ) {
   const config = testSettings(process.env);
-  if (!config) throw new Error('PAYMENT_DISABLED');
+  if (!config || !process.env.CHECKOUT_SCOPE)
+    throw new Error('PAYMENT_DISABLED');
   const stripe = new Stripe(config.key, {
     timeout: 8000,
     maxNetworkRetries: 0,
@@ -86,7 +91,8 @@ export async function openStripe(
     quote,
     delivery,
     config.origin,
-    attempt
+    attempt,
+    digest(process.env.CHECKOUT_SCOPE)
   );
   try {
     const session = await stripe.checkout.sessions.create(params, {

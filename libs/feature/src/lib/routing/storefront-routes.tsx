@@ -127,12 +127,6 @@ export function renderStorefrontRoutes({
       />
 
       <Route
-        path="/api/stripe/webhook"
-        element={
-          <ServerRoutePage pathLabel="/api/stripe/webhook" theme={theme} />
-        }
-      />
-      <Route
         path="/api/ai/*"
         element={<ServerRoutePage pathLabel="/api/ai/*" theme={theme} />}
       />

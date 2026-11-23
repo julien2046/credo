@@ -111,7 +111,21 @@ test('builds a test session from the priced lines and validated destination; ret
     /INVALID_INPUT/
   );
   const attempt = randomUUID();
-  const request = sessionRequest(q, d, 'http://localhost:4200', attempt);
+  const request = sessionRequest(
+    q,
+    d,
+    'http://localhost:4200',
+    attempt,
+    'shop'
+  );
+  assert.deepEqual(request.params.metadata, {
+    quoteId: q.quoteId,
+    credoScope: 'shop',
+  });
+  assert.equal(
+    request.params.line_items?.at(-1)?.price_data?.product_data?.metadata?.kind,
+    'delivery'
+  );
   assert.equal(
     request.params.payment_intent_data?.shipping?.address.postal_code,
     'H2X1Y4'
@@ -132,11 +146,13 @@ test('builds a test session from the priced lines and validated destination; ret
   );
   assert.equal(
     request.idempotencyKey,
-    sessionRequest(q, d, 'http://localhost:4200', attempt).idempotencyKey
+    sessionRequest(q, d, 'http://localhost:4200', attempt, 'shop')
+      .idempotencyKey
   );
   assert.notEqual(
     request.idempotencyKey,
-    sessionRequest(q, d, 'http://localhost:4200', randomUUID()).idempotencyKey
+    sessionRequest(q, d, 'http://localhost:4200', randomUUID(), 'shop')
+      .idempotencyKey
   );
 });
 test('rereads the database before redirect; price or stock changes never reach Stripe', async (t) => {

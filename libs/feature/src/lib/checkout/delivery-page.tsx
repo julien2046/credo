@@ -161,7 +161,9 @@ export function CheckoutReturn({ cancelled }: { cancelled: boolean }) {
         {cancelled ? 'Paiement interrompu' : 'Retour de Stripe'}
       </Typography>
       <Typography>
-        Aucune commande créée dans la boutique. Votre panier est conservé.
+        {cancelled
+          ? 'Votre panier est conservé.'
+          : 'Si votre paiement test a abouti, votre commande sera enregistrée sur confirmation de Stripe. Votre panier est conservé.'}
       </Typography>
       <Button component={Link} to="/cart" startIcon={<ArrowLeft size={18} />}>
         Retour au panier

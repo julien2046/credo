@@ -2,7 +2,7 @@
   "name": "@credo/amplify-backend",
   "targets": {
     "test": {
-      "command": "node --import tsx --test amplify/functions/checkout/checkout.test.ts",
+      "command": "node --import tsx --test amplify/functions/*/*.test.ts",
       "cache": true,
       "inputs": ["default", "^default"]
     },

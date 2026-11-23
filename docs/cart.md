@@ -46,18 +46,35 @@ proviennent uniquement du catalogue et de la configuration serveur du client.
 
 ## Tester Stripe Checkout pour client-a
 
-Depuis la racine, enregistrer une **clé secrète Stripe de test** (`sk_test_...`)
-à l'invite, jamais dans le code, un fichier public, une variable `VITE_*` ou le chat :
+**1. Obtenir l'adresse du webhook.** Depuis la racine, arrêter un éventuel
+processus de sandbox pour ce client, puis déployer une fois le backend de test
+avec les paiements désactivés. Cette étape crée une URL HTTPS même sans secret :
+
+```sh
+CLIENT_ID=client-a STRIPE_ORDERS_ENABLED=false npx ampx sandbox --profile julie-credo --identifier client-a --once
+node -p "require('./amplify_outputs.json').custom.stripeWebhookUrl"
+```
+
+**2. Connecter Stripe.** Dans l'environnement **test** du compte Stripe,
+créer une destination de type webhook pour les événements du compte, au format
+**snapshot**. Utiliser l'URL affichée ci-dessus (API Gateway, pas le domaine
+du storefront). Choisir `checkout.session.completed` et
+`checkout.session.async_payment_succeeded`. Relever le secret de signature
+`whsec_...` de **cette destination**.
+
+Enregistrer les secrets aux invites (inutile de redéfinir la clé API si elle
+existe déjà). Ne jamais les mettre dans le code, une variable publique ou le chat :
 
 ```sh
 npx ampx sandbox secret set STRIPE_TEST_SECRET_KEY --profile julie-credo --identifier client-a
+npx ampx sandbox secret set STRIPE_TEST_WEBHOOK_SECRET --profile julie-credo --identifier client-a
 ```
 
-Terminal 1 : lancer le backend de test de ce même client. L'origine est celle
+**3. Activer le parcours.** Terminal 1 : lancer le backend de test de ce même client. L'origine est celle
 de la boutique à laquelle Stripe doit revenir, sans chemin ni paramètres :
 
 ```sh
-CLIENT_ID=client-a CHECKOUT_RETURN_ORIGIN=http://localhost:4200 npx ampx sandbox --profile julie-credo --identifier client-a
+CLIENT_ID=client-a STRIPE_ORDERS_ENABLED=true CHECKOUT_RETURN_ORIGIN=http://localhost:4200 npx ampx sandbox --profile julie-credo --identifier client-a
 ```
 
 Terminal 2 : après la mise à jour de `amplify_outputs.json`, lancer ou relancer
@@ -66,21 +83,34 @@ Terminal 2 : après la mise à jour de `amplify_outputs.json`, lancer ou relance
 1. Ajouter deux unités d'un produit publié à 25 $ CA. Remplir la livraison avec des données fictives et le code postal H2X 1Y4. L'estimation attendue est de 59,95 $ CA, livraison incluse, hors taxes.
 2. Après l'estimation, modifier le prix dans un autre onglet marchand. « Payer en mode test » doit demander une nouvelle estimation **sans** ouvrir Stripe. Passer le produit en rupture doit aussi empêcher le paiement.
 3. Rendre le produit disponible, refaire l'estimation et ouvrir Stripe. Comparer les lignes et le total. Annuler : retour à la boutique, panier intact.
-4. Refaire le parcours avec une [carte de test Stripe](https://docs.stripe.com/testing). Vérifier le résultat dans l'environnement de test Stripe. Le retour à la boutique ne confirme aucun paiement et ne crée aucune commande.
+4. Ouvrir une **nouvelle** session et régler avec une [carte de test Stripe](https://docs.stripe.com/testing). Dans Stripe, vérifier que le webhook a reçu une réponse HTTP 200.
+5. Dans DynamoDB, ouvrir la table indiquée par `node -p "require('./amplify_outputs.json').custom.ordersTableName"`. Chercher la clé `id` correspondant à la session Stripe (`cs_test_...`). Vérifier `status = PAID`, `testMode = true`, les articles, les montants en cents et l'adresse. Renvoyer le même événement depuis Stripe : toujours une seule commande, avec la même date. Une annulation ne doit créer aucune ligne.
 
-Sans `CHECKOUT_RETURN_ORIGIN`, le devis fonctionne pour un `CLIENT_ID`
+Le serveur vérifie la [signature Stripe](https://docs.stripe.com/webhooks/signature)
+sur le corps brut, puis relit la session payée, ses articles et son paiement chez
+Stripe. Il ne relit pas le catalogue : la commande conserve les montants de
+l'achat effectif. Une [écriture conditionnelle DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html)
+empêche les doublons, même pour deux livraisons simultanées. En cas d'échec
+Stripe ou DynamoDB, le webhook renvoie une erreur pour permettre une nouvelle
+tentative. Vérifier les livraisons en erreur dans le Dashboard Stripe.
+Les événements non payés, en mode réel, d'une autre boutique ou de sessions
+antérieures sans identifiant de déploiement sont ignorés (200, aucune commande).
+
+Sans `CHECKOUT_RETURN_ORIGIN` ou sans `STRIPE_ORDERS_ENABLED=true`, le devis fonctionne pour un `CLIENT_ID`
 configuré mais le bouton Stripe reste masqué. En hébergement de test,
-utiliser une origine HTTPS et un secret Amplify propres à la branche :
+utiliser une origine HTTPS, une destination Stripe et des secrets Amplify propres à la branche :
 [gestion des secrets](https://docs.amplify.aws/react/build-a-backend/functions/environment-variables-and-secrets/).
 Le navigateur utilise les opérations AppSync `quoteCheckout` et
 `startTestCheckout`, pas une route React ni une clé Stripe.
 Les tentatives répétées d'une même validation utilisent une
 [clé d'idempotence Stripe](https://docs.stripe.com/api/idempotent_requests).
 
-**Limites :** test uniquement, pas de réservation de stock, de taxes, de
-webhook ni de commande. Avant la vente réelle : restreindre les mutations
-catalogue aux marchands, limiter les tentatives, valider zone/tarifs/taxes
-et traiter les confirmations Stripe signées de façon idempotente.
+**Limites :** test uniquement, pas de réservation de stock, de taxes, d'écran
+de suivi ni de traitement des remboursements. La table n'est accessible ni en
+lecture ni en écriture via le navigateur. Le retour depuis Stripe n'est pas
+une preuve de paiement et ne vide pas le panier. Avant la vente réelle :
+restreindre les mutations catalogue aux marchands, limiter les tentatives,
+valider zone/tarifs/taxes et définir la conservation des données de commande.
 
 Test automatisé du calcul et du passage à Stripe (sans réseau ni secret) :
 
