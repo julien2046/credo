@@ -11,5 +11,6 @@ export * from './lib/catalog/category-page';
 export * from './lib/cart/cart-provider';
 export * from './lib/cart/cart-page';
 export * from './lib/catalog/product-summary-card';
+export * from './lib/catalog/product-search-dialog';
 export * from './lib/catalog/product-page';
 export * from './lib/routing/storefront-content-loaders';

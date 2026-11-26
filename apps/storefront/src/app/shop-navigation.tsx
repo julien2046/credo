@@ -1,9 +1,10 @@
 import { useEffect, useId, useState } from 'react';
-import { Button, Menu, MenuItem, Stack } from '@mui/material';
+import { Button, IconButton, Menu, MenuItem, Stack, Tooltip } from '@mui/material';
 import { Link, NavLink, useLocation } from 'react-router';
 import { listPublicCategories, type PublicCategory } from '@credo/data-access';
 import { getDataClient } from '@credo/platform-amplify';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
+import { ProductSearchDialog } from '@credo/feature';
 
 export function ShopNavigation() {
   const id = useId();
@@ -11,6 +12,7 @@ export function ShopNavigation() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [categories, setCategories] = useState<PublicCategory[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!anchor || categories) return;
@@ -102,6 +104,13 @@ export function ShopNavigation() {
       <Button component={NavLink} to="/promo/summer">
         Promotions
       </Button>
+      <Tooltip title="Rechercher un produit">
+        <IconButton aria-label="Rechercher un produit" aria-haspopup="dialog"
+          onClick={() => setSearchOpen(true)} sx={{ width: 44, height: 44 }}>
+          <Search size={20} />
+        </IconButton>
+      </Tooltip>
+      {searchOpen && <ProductSearchDialog onClose={() => setSearchOpen(false)} />}
     </Stack>
   );
 }

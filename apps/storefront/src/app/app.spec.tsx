@@ -1,4 +1,4 @@
-import { cleanup, render, screen, act, fireEvent, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, act, fireEvent, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { clientConfigClientA } from '@credo/client-config-client-a';
 import { clientATheme } from '@credo/themes-client-a';
@@ -311,6 +311,45 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Voir la boutique' }));
     expect(await screen.findByRole('heading', { name: 'La sélection' })).toBeTruthy();
     expect(screen.queryByRole('navigation', { name: 'Administration' })).toBeNull();
+  });
+
+  it('searches all public pages by product name and opens a matching product', async () => {
+    const product = { id: 'p2', name: 'Étagère en chêne', slug: 'etagere-chene', currency: 'CAD', price: 42, inStock: true };
+    catalog.products.mockClear().mockImplementation(async ({ nextToken }) => ({
+      data: nextToken ? { items: [product], nextToken: null } : { items: [], nextToken: 'next' },
+    }));
+    const router = renderRoute('/promo/summer');
+    fireEvent.click(await screen.findByRole('button', { name: 'Rechercher un produit' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Rechercher un produit' }));
+    const field = dialog.getByRole('searchbox', { name: 'Nom du produit' });
+    fireEvent.change(field, { target: { value: 'chaise' } });
+    expect(await dialog.findByText('Aucun produit trouvé.')).toBeTruthy();
+    fireEvent.change(field, { target: { value: 'CHENE etag' } });
+    const link = await dialog.findByRole('link', { name: /Étagère en chêne/ });
+    expect(catalog.products).toHaveBeenCalledTimes(2);
+    fireEvent.click(link);
+    expect(await screen.findByRole('heading', { name: product.name })).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/p/etagere-chene');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('preserves the search term on retry and reveals more matches without reloading the catalogue', async () => {
+    const items = Array.from({ length: 21 }, (_, i) => ({
+      id: 'p' + i, name: 'Table ' + i, slug: 'table-' + i, currency: 'CAD', price: i + 1, inStock: true,
+    }));
+    catalog.products.mockClear().mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ data: { items, nextToken: null } });
+    renderRoute('/promo/summer');
+    fireEvent.click(await screen.findByRole('button', { name: 'Rechercher un produit' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.change(dialog.getByRole('searchbox'), { target: { value: 'table' } });
+    fireEvent.click(await dialog.findByRole('button', { name: 'Réessayer' }));
+    expect(await dialog.findByText('21 produits')).toBeTruthy();
+    expect(dialog.getAllByRole('link')).toHaveLength(20);
+    fireEvent.click(dialog.getByRole('button', { name: 'Afficher plus de résultats' }));
+    expect(dialog.getAllByRole('link')).toHaveLength(21);
+    expect(catalog.products).toHaveBeenCalledTimes(2);
+    fireEvent.click(dialog.getByRole('button', { name: 'Fermer la recherche' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('navigates to an actual category from the shop menu', async () => {
