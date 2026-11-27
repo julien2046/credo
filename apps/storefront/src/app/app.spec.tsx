@@ -19,11 +19,16 @@ import CategoryRoute, {
 import { getCurrentUser } from 'aws-amplify/auth';
 
 const catalog = vi.hoisted(() => ({
+  organizations: vi.fn(),
   categories: vi.fn(),
   products: vi.fn(),
   quote: vi.fn(),
   pay: vi.fn(),
 }));
+const fetchSession = vi.hoisted(() => vi.fn());
+const sessionWithGroups = (groups: unknown, sub = 'merchant') => ({
+  tokens: { accessToken: { payload: { sub, 'cognito:groups': groups } } },
+});
 
 vi.mock('aws-amplify/data', () => ({
   generateClient: () => ({
@@ -35,7 +40,7 @@ vi.mock('aws-amplify/data', () => ({
     },
     models: {
       Organization: {
-        list: vi.fn().mockResolvedValue({ data: [], errors: undefined }),
+        list: catalog.organizations,
         create: vi.fn().mockResolvedValue({ data: {}, errors: undefined }),
       },
       Category: {
@@ -66,6 +71,7 @@ vi.mock('aws-amplify/storage', () => ({
 }));
 
 vi.mock('aws-amplify/auth', () => ({
+  fetchAuthSession: fetchSession,
   getCurrentUser: vi.fn().mockResolvedValue({
     username: 'merchant@example.com',
     signInDetails: { loginId: 'merchant@example.com' },
@@ -109,6 +115,8 @@ function renderRoute(path: string) {
 
 beforeEach(() => {
   localStorage.clear();
+  fetchSession.mockReset().mockResolvedValue(sessionWithGroups(undefined));
+  catalog.organizations.mockReset().mockResolvedValue({ data: [] });
   catalog.quote.mockReset().mockResolvedValue({ data: {
     subtotalCents: 5400, deliveryCents: 995, totalCents: 6395, quoteId: 'test-quote', paymentEnabled: true,
   } });
@@ -303,9 +311,10 @@ describe('App', () => {
   });
 
   it('switches between the shop and merchant navigation', async () => {
+    fetchSession.mockResolvedValue(sessionWithGroups(['MERCHANT']));
     renderRoute('/');
     expect(screen.getByRole('navigation', { name: 'Boutique' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('link', { name: 'Espace marchand' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Espace marchand' }));
     expect(await screen.findByRole('navigation', { name: 'Administration' })).toBeTruthy();
     expect(screen.queryByRole('navigation', { name: 'Boutique' })).toBeNull();
     fireEvent.click(screen.getByRole('link', { name: 'Voir la boutique' }));
@@ -383,7 +392,8 @@ describe('App', () => {
     expect((await screen.findByRole('link', { name: /Chaise verte/ })).getAttribute('href')).toBe('/p/chaise-verte');
   });
 
-  it('should render protected admin products route for authenticated user', async () => {
+  it('opens the products admin for a member of the MERCHANT group', async () => {
+    fetchSession.mockResolvedValue(sessionWithGroups(['OTHER', 'MERCHANT']));
     renderRoute('/admin/products');
 
     await screen.findByRole('heading', {
@@ -393,6 +403,38 @@ describe('App', () => {
     expect(
       await screen.findByRole('button', { name: 'Ajouter un produit' })
     ).toBeTruthy();
+  });
+
+  it.each(['/admin', '/admin/products', '/admin/categories', '/admin/promos', '/admin/newsletters', '/admin/unknown'])(
+    'denies a signed-in account without a group at %s before loading merchant data', async path => {
+      renderRoute(path);
+      expect(await screen.findByRole('heading', { name: 'Accès réservé aux marchands' })).toBeTruthy();
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).toBeNull();
+      expect(catalog.organizations).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('link', { name: 'Voir la boutique' }));
+      expect(await screen.findByRole('heading', { name: 'La sélection' })).toBeTruthy();
+      expect(screen.queryByRole('link', { name: 'Espace marchand' })).toBeNull();
+    }
+  );
+
+  it.each([
+    sessionWithGroups(['MERCHANT_HELPER']),
+    sessionWithGroups('MERCHANT'),
+    sessionWithGroups(['MERCHANT'], 'another-user'),
+    {},
+  ])('does not grant access from unrelated or malformed claims', async session => {
+    fetchSession.mockResolvedValue(session);
+    renderRoute('/admin/products');
+    expect(await screen.findByRole('heading', { name: 'Accès réservé aux marchands' })).toBeTruthy();
+    expect(catalog.organizations).not.toHaveBeenCalled();
+  });
+
+  it('keeps the backoffice closed if the session cannot be read and allows signing out', async () => {
+    fetchSession.mockRejectedValue(new Error('Session unavailable'));
+    renderRoute('/admin');
+    expect(await screen.findByRole('heading', { name: 'Accès réservé aux marchands' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Déconnexion' }));
+    expect(await screen.findByRole('heading', { name: 'Connexion par SMS' })).toBeTruthy();
   });
 
   it('loads a product directly, then a category through navigation', async () => {

@@ -1,6 +1,6 @@
 import { Box, Button, Divider, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { Link, Route, useParams } from 'react-router';
+import { Link, Outlet, Route, useParams } from 'react-router';
 import type { StorefrontDeliveryConfig, StorefrontTheme } from '@credo/shared';
 import { AdminCatalog } from '../admin/admin-catalog';
 import { CartPage } from '../cart/cart-page';
@@ -52,6 +52,7 @@ export function renderStorefrontRoutes({
   theme,
 }: RenderStorefrontRoutesProps) {
   const deliveryFeeCents = getDeliveryFeeCents(delivery, currency);
+  const notFound = <RoutePlaceholder title="404" details="Route inconnue" theme={theme} />;
   return (
     <>
       <Route path="/promo/:promoSlug" element={<PromoPage theme={theme} />} />
@@ -64,6 +65,11 @@ export function renderStorefrontRoutes({
         path="/admin"
         element={
           <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
+            <Outlet />
+          </AdminGuard>
+        }
+      >
+        <Route index element={
             <Stack spacing={3}>
               <Typography component="h1" variant="h4">Tableau de bord</Typography>
               <Typography variant="h6" component="h2">Catalogue</Typography>
@@ -82,65 +88,20 @@ export function renderStorefrontRoutes({
                 ))}
               </Stack>
             </Stack>
-          </AdminGuard>
-        }
-      />
-      <Route
-        path="/admin/products"
-        element={
-          <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <AdminCatalog key="products" section="products" theme={theme} currency={currency} />
-          </AdminGuard>
-        }
-      />
-      <Route
-        path="/admin/categories"
-        element={
-          <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <AdminCatalog key="categories" section="categories" theme={theme} currency={currency} />
-          </AdminGuard>
-        }
-      />
-      <Route
-        path="/admin/promos"
-        element={
-          <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <RoutePlaceholder
-              title="Admin Promos"
-              details="Gestion des promotions"
-              theme={theme}
-            />
-          </AdminGuard>
-        }
-      />
-      <Route
-        path="/admin/newsletters"
-        element={
-          <AdminGuard auth={auth} theme={theme} signInNode={signInNode}>
-            <RoutePlaceholder
-              title="Admin Newsletters"
-              details="Gestion newsletter"
-              theme={theme}
-            />
-          </AdminGuard>
-        }
-      />
+        } />
+        <Route path="products" element={<AdminCatalog key="products" section="products" theme={theme} currency={currency} />} />
+        <Route path="categories" element={<AdminCatalog key="categories" section="categories" theme={theme} currency={currency} />} />
+        <Route path="promos" element={<RoutePlaceholder title="Admin Promos" details="Gestion des promotions" theme={theme} />} />
+        <Route path="newsletters" element={<RoutePlaceholder title="Admin Newsletters" details="Gestion newsletter" theme={theme} />} />
+        <Route path="*" element={notFound} />
+      </Route>
 
       <Route
         path="/api/ai/*"
         element={<ServerRoutePage pathLabel="/api/ai/*" theme={theme} />}
       />
 
-      <Route
-        path="*"
-        element={
-          <RoutePlaceholder
-            title="404"
-            details="Route inconnue"
-            theme={theme}
-          />
-        }
-      />
+      <Route path="*" element={notFound} />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { checkout } from '../functions/checkout/resource';
+import { MERCHANT_GROUP } from '@credo/shared';
 
 const schema = a.schema({
   CheckoutQuote: a.customType({
@@ -30,7 +31,7 @@ const schema = a.schema({
       categories: a.hasMany('Category', 'organizationId'),
       products: a.hasMany('Product', 'organizationId'),
     })
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.group(MERCHANT_GROUP)]),
 
   Category: a
     .model({
@@ -41,7 +42,7 @@ const schema = a.schema({
       organization: a.belongsTo('Organization', 'organizationId'),
       products: a.hasMany('Product', 'categoryId'),
     })
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.group(MERCHANT_GROUP)]),
 
   Product: a
     .model({
@@ -58,7 +59,7 @@ const schema = a.schema({
       categoryId: a.id(),
       category: a.belongsTo('Category', 'categoryId'),
     })
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.group(MERCHANT_GROUP)]),
 
   PublicCategory: a.customType({
     id: a.id().required(),

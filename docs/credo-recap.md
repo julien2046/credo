@@ -7,7 +7,7 @@ Document consolidé à partir des notes, du code local et des validations rappor
 ## État En Bref
 
 - Réalisé : catalogue produits/catégories, images S3, pages publiques, cartes produits MUI, espaces boutique/marchand distincts, pré-rendu natif du catalogue et génération SEO.
-- À sécuriser : autorisations marchands côté backend, stockage et frontend.
+- Accès marchand : groupe Cognito `MERCHANT` requis par le backoffice, les modèles AppSync et l’écriture des images S3. À valider dans chaque environnement après déploiement.
 - À valider sur AWS : règles de routage, fichiers statiques, SEO et configuration de chaque client.
 - Parcours d’achat : panier persistant, estimation serveur et Stripe Checkout en mode test. Essai de bout en bout avec le compte de test du marchand à faire.
 - En place côté serveur : création d'une commande de test payée sur notification Stripe signée, sans doublon.
@@ -324,20 +324,39 @@ Compte client prévu : `/account/orders`, `/account/orders/:id`, `/account/profi
 
 ## 16. Auth Et Sécurité
 
-État actuel :
+L’inscription et la connexion par code SMS ne donnent aucun droit marchand. Seul un administrateur AWS habilité attribue le groupe Cognito `MERCHANT`, séparément pour chaque boutique et environnement.
 
-- auth passwordless téléphone/SMS OTP en place ;
-- création de compte ;
-- confirmation ;
-- connexion ;
-- logout ;
-- challenge Cognito géré ;
-- modèles métier accessibles aux utilisateurs authentifiés ; requêtes publiques dédiées pour le catalogue ;
-- tout utilisateur authentifié peut accéder au backoffice.
+| Accès | Visiteur | Client connecté sans groupe | Marchand |
+| --- | --- | --- | --- |
+| Catalogue publié, lecture des images, panier et checkout public | Oui | Oui | Oui |
+| `/admin/*` | Connexion SMS proposée | Accès refusé | Autorisé |
+| Accès direct aux modèles AppSync `Organization`, `Category`, `Product`, y compris aux brouillons | Non | Non | Oui |
+| Ajouter, remplacer ou supprimer une image S3 sous `catalog/product-images/*` | Non | Non | Oui |
 
-Ce fonctionnement reste réservé aux tests, pas à la production. La séparation visuelle frontoffice/backoffice n’est pas une séparation de permissions.
+L’interface lit le groupe dans la session Cognito ; AppSync et IAM/S3 appliquent leurs propres autorisations. Les images du préfixe catalogue restent lisibles, même celles d’un brouillon : ne pas y déposer de visuel confidentiel. Le rôle marchand ne donne pas accès à la table privée des commandes.
 
-Le stockage autorise actuellement la lecture invitée des images catalogue et l’écriture/suppression aux utilisateurs authentifiés. Ce périmètre doit être réexaminé avec les rôles marchands ; ne pas considérer les images de brouillons comme confidentielles.
+### Attribuer ou retirer le rôle dans la sandbox
+
+1. Déployer les modifications backend avec la commande sandbox habituelle de la boutique. Conserver ses variables (notamment celles du checkout s’il est activé). Attendre que `amplify_outputs.json` soit actualisé.
+2. Créer ou confirmer le compte par SMS si nécessaire. Dans **Cognito → User pools**, vérifier le pool de la sandbox et relever le **Username Cognito** du compte voulu. Un ancien compte de test n’est pas promu automatiquement.
+3. Depuis la racine du dépôt, vérifier la cible puis attribuer le rôle avec un profil AWS autorisé :
+
+```sh
+POOL=$(node -p "require('./amplify_outputs.json').auth.user_pool_id")
+REGION=$(node -p "require('./amplify_outputs.json').auth.aws_region")
+USERNAME='remplacer-par-le-username-cognito-verifie'
+printf 'Région : %s ; pool : %s ; utilisateur : %s\n' "$REGION" "$POOL" "$USERNAME"
+aws cognito-idp admin-add-user-to-group --profile julie-credo --region "$REGION" --user-pool-id "$POOL" --username "$USERNAME" --group-name MERCHANT
+```
+
+4. Se déconnecter puis se reconnecter par SMS pour obtenir les nouveaux jetons. Ouvrir `/admin/products`, modifier un produit de test et ajouter une image. Dans une autre session, un compte sans groupe doit pouvoir consulter la boutique, mais voir « Accès réservé aux marchands » à la même URL.
+5. Pour retirer le rôle, utiliser les mêmes variables :
+
+```sh
+aws cognito-idp admin-remove-user-from-group --profile julie-credo --region "$REGION" --user-pool-id "$POOL" --username "$USERNAME" --group-name MERCHANT
+```
+
+Après retrait, vérifier le refus avec une nouvelle session. Le retrait d’un groupe ne révoque pas instantanément les jetons et identifiants temporaires S3 déjà émis : ils peuvent rester valides jusqu’à expiration.
 
 À durcir avant production :
 
@@ -345,22 +364,19 @@ Le stockage autorise actuellement la lecture invitée des images catalogue et l�
 - validation formats ambigus ;
 - renvoi du code OTP ;
 - meilleurs messages d’erreur Cognito ;
-- séparation admin/client ;
-- RBAC `MERCHANT` / `CUSTOMER` ;
-- groupes Cognito, claims custom ou invitation marchand ;
-- tests signup/signin/guard/erreurs ;
-- permissions backend plus fines ;
+- tests SMS de bout en bout, y compris renvoi et expiration ;
+- autorisation par propriétaire lorsque l’espace commandes client sera ajouté ;
 - config Cognito/SNS propre ;
 - surveillance coûts SMS.
 
 Sécurité minimum :
 
 - validation Zod sur toutes les API ;
-- RBAC admin/client ;
+- vérifier la séparation marchand/client sur chaque environnement ;
 - signature Stripe webhook obligatoire ;
 - recalcul serveur des prix ;
 - rate limiting sur routes sensibles, surtout IA ;
-- permissions plus strictes que `authenticated`.
+- ne pas accorder de droits d’administration à tous les comptes authentifiés.
 
 ## 17. Import Catalogue
 
@@ -399,7 +415,7 @@ Si un client a un CSV particulier : adapter client-specific. Le core ne bouge pa
 - Menu admin distinct, rubrique active et déconnexion.
 - Tableau de bord avec accès Produits et Catégories.
 - Listes séparées par rubrique ; formulaires de création ouverts à la demande.
-- Auth SMS fonctionnelle et guard de connexion, mais pas encore de rôle marchand obligatoire.
+- Auth SMS et rôle Cognito `MERCHANT` obligatoire, y compris côté données et stockage.
 
 **Validation**
 Le CRUD et le HTML statique ont été testés par l’utilisateur lors des étapes précédentes. Dernière validation automatisée rapportée : 51 tests storefront + 12 tests feature, lint et TypeScript réussis. Ce chiffre n’est pas un audit exhaustif du repo ni une nouvelle exécution aujourd’hui ; Cognito/S3/AWS nécessitent des tests réels.
@@ -595,7 +611,7 @@ Pour le MVP : commencer simple avec GA4, génération de drafts, copier/exporter
 
 ## 24. Roadmap Actualisée
 
-1. Stabilisation : tester les nouveaux écrans admin et boutique, puis renforcer l’accès marchand et les permissions backend/storage.
+1. Stabilisation : tester les écrans admin et boutique, y compris les permissions marchand/client dans la sandbox.
 2. Publication/SEO : valider l’hébergement Amplify, automatiser les rebuilds pertinents, ajouter le pré-rendu de l’accueil.
 3. Vente : panier persistant, quantités, paiement Stripe, commandes, compte client.
 4. Marketing : PromotionEvent, page promo pré-rendue, bannière, newsletter avec prévisualisation.
@@ -606,7 +622,7 @@ Les anciens jalons mensuels ne sont plus un calendrier d’engagement. Les repla
 
 ## 25. Décisions À Figer
 
-- RBAC : adopter au minimum `MERCHANT` et `CUSTOMER` avant prod.
+- RBAC : seuls les membres de `MERCHANT` administrent. Aucun groupe `CUSTOMER` n’est nécessaire pour acheter.
 - SEO : pré-rendre uniquement les pages publiques.
 - Import : commencer par CSV canonique strict.
 - Social/Ads : génération de drafts + copier/exporter, pas publication directe.
@@ -616,7 +632,7 @@ Les anciens jalons mensuels ne sont plus un calendrier d’engagement. Les repla
 ## 26. Prochaines Actions
 
 1. Tester le parcours marchand complet dans la sandbox : création, édition, images, publication, dépublication, suppression et navigation.
-2. Mettre une véritable autorisation marchand côté données, stockage et frontend ; vérifier qu’un client connecté ne peut pas administrer.
+2. Valider en sandbox les autorisations AppSync/S3 et le refus du backoffice pour un client connecté sans groupe.
 3. Vérifier le déploiement statique AWS, les règles de routage, les images et le SEO sur le domaine cible.
 4. Concevoir puis implémenter le regroupement des changements et le rebuild automatique.
 5. Pré-rendre le contenu de l’accueil pour éviter que sa sélection dépende uniquement du navigateur.
@@ -629,6 +645,6 @@ Le catalogue de base n’est plus à démarrer. Les prochaines étapes portent s
 
 Credo dispose maintenant d’un catalogue fonctionnel, d’une boutique avec cartes produits, d’un backoffice distinct et d’un pré-rendu natif produit/catégorie avec les fichiers SEO.
 
-La plateforme n’est pas prête à encaisser en production : rôles marchands, validation du déploiement, rebuild automatique, taxes et suivi des commandes restent à traiter.
+La plateforme n’est pas prête à encaisser en production : validation des rôles déployés, rebuild automatique, taxes et suivi des commandes restent à traiter.
 
 La vision reste inchangée : un produit partagé, une identité par client et des déploiements AWS séparés. Le socle catalogue est là ; il faut maintenant sécuriser l’administration et fiabiliser la mise en ligne avant d’ouvrir la vente.

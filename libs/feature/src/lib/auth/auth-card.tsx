@@ -43,7 +43,7 @@ export function AuthCard({
     : isConfirmOtp
       ? 'Confirmation du code SMS'
       : isRequestSignUp
-        ? 'Creation du compte marchand'
+        ? 'Création du compte'
         : 'Validation du compte';
   const currentStepDetails = isRequestOtp
     ? 'Saisis un numero en format international pour recevoir un OTP.'
@@ -57,8 +57,7 @@ export function AuthCard({
     <StorefrontCard title="Authentification passwordless" theme={theme}>
       <Stack spacing={2.5}>
         <Typography sx={{ color: theme.mutedTextColor }}>
-          Flux court terme pour acceder au backoffice via OTP SMS, sans mot de
-          passe.
+          L’accès à l’administration est réservé aux comptes autorisés par la boutique.
         </Typography>
 
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>

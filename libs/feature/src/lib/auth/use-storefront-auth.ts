@@ -1,7 +1,10 @@
-import { type SubmitEvent, useEffect, useState } from 'react';
+import { type SubmitEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { Hub } from 'aws-amplify/utils';
+import { MERCHANT_GROUP } from '@credo/shared';
 import {
   confirmSignUp,
   confirmSignIn,
+  fetchAuthSession,
   getCurrentUser,
   signIn,
   signUp,
@@ -23,7 +26,9 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
   const [auth, setAuth] = useState<AuthState>({
     status: 'loading',
     identifier: null,
+    isMerchant: false,
   });
+  const sessionVersion = useRef(0);
   const [authMode, setAuthModeState] = useState<AuthMode>('sign-in');
   const [otpStep, setOtpStep] = useState<OtpStep>('request-code');
   const [signUpStep, setSignUpStep] = useState<SignUpStep>('collect-phone');
@@ -52,28 +57,40 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
     resetFlowState();
   };
 
-  /**
-   * Recharge l'état de session Cognito.
-   */
-  const refreshSession = async () => {
+  const clearSession = useCallback(() => {
+    sessionVersion.current += 1;
+    setAuth({ status: 'signedOut', identifier: null, isMerchant: false });
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    const version = ++sessionVersion.current;
     try {
       const user = await getCurrentUser();
-
-      setAuth({
+      const session = await fetchAuthSession().catch(() => null);
+      const claims = session?.tokens?.accessToken.payload;
+      const groups = claims?.['cognito:groups'];
+      if (version === sessionVersion.current) setAuth({
         status: 'signedIn',
-        identifier: user?.signInDetails?.loginId ?? user?.username ?? null,
+        identifier: user.signInDetails?.loginId ?? user.username,
+        isMerchant: claims?.sub === user.userId && Array.isArray(groups) && groups.includes(MERCHANT_GROUP),
       });
     } catch {
-      setAuth({
-        status: 'signedOut',
-        identifier: null,
-      });
+      if (version === sessionVersion.current) clearSession();
     }
-  };
+  }, [clearSession]);
 
   useEffect(() => {
+    const stop = Hub.listen('auth', ({ payload }) => {
+      if (payload.event === 'signedOut' || payload.event === 'tokenRefresh_failure') clearSession();
+      if (payload.event === 'signedIn') setAuth({ status: 'loading', identifier: null, isMerchant: false });
+      if (payload.event === 'tokenRefresh' || payload.event === 'signedIn') void refreshSession();
+    });
     void refreshSession();
-  }, []);
+    return () => {
+      sessionVersion.current += 1;
+      stop();
+    };
+  }, [clearSession, refreshSession]);
 
   /**
    * Gère les étapes Cognito du flow USER_AUTH pour fiabiliser le SMS OTP.
@@ -264,10 +281,7 @@ export function useStorefrontAuth(): StorefrontAuthHookResult {
 
     await signOut();
     resetFlowState();
-    setAuth({
-      status: 'signedOut',
-      identifier: null,
-    });
+    clearSession();
   };
 
   return {

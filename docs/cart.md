@@ -109,7 +109,7 @@ Les tentatives répétées d'une même validation utilisent une
 de suivi ni de traitement des remboursements. La table n'est accessible ni en
 lecture ni en écriture via le navigateur. Le retour depuis Stripe n'est pas
 une preuve de paiement et ne vide pas le panier. Avant la vente réelle :
-restreindre les mutations catalogue aux marchands, limiter les tentatives,
+valider en sandbox les [droits marchands](./credo-recap.md#16-auth-et-sécurité), limiter les tentatives,
 valider zone/tarifs/taxes et définir la conservation des données de commande.
 
 Test automatisé du calcul et du passage à Stripe (sans réseau ni secret) :

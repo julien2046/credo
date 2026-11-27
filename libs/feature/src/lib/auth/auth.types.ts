@@ -1,15 +1,15 @@
 import type { ReactNode, SubmitEvent } from 'react';
 import type { StorefrontTheme } from '@credo/shared';
 
-export type AuthStatus = 'loading' | 'signedOut' | 'signedIn';
 export type OtpStep = 'request-code' | 'confirm-code';
 export type AuthMode = 'sign-in' | 'sign-up';
 export type SignUpStep = 'collect-phone' | 'confirm-sign-up';
 
-export type AuthState = {
-  status: AuthStatus;
-  identifier: string | null;
-};
+export type AuthState =
+  | { status: 'loading' | 'signedOut'; identifier: null; isMerchant: false }
+  | { status: 'signedIn'; identifier: string | null; isMerchant: boolean };
+
+export type AuthStatus = AuthState['status'];
 
 export type AuthCardProps = {
   theme: StorefrontTheme;

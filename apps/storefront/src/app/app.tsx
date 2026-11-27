@@ -202,7 +202,7 @@ export function App({
               )}
             </Box>
           </Box>
-          {isAdminRoute && auth.status === 'signedIn' && (
+          {isAdminRoute && auth.isMerchant && (
             <Stack component="nav" aria-label="Administration" direction="row" flexWrap="wrap" sx={{ py: 1, gap: 0.5, borderBottom: 1, borderColor: 'divider', '& .active': { bgcolor: 'action.selected', color: 'text.primary' } }}>
               <Button component={NavLink} end to="/admin">Tableau de bord</Button>
               <Button component={NavLink} end to="/admin/products">Produits</Button>
@@ -218,7 +218,11 @@ export function App({
           <Stack component="footer" direction="row" alignItems="center" justifyContent="space-between"
             sx={{ py: 2, borderTop: 1, borderColor: 'divider' }}>
             <Typography variant="body2">{clientConfig.brandName}</Typography>
-            {!isAdminRoute && <Button component={Link} to="/admin" color="inherit">Espace marchand</Button>}
+            {auth.status === 'signedIn' && !auth.isMerchant ? (
+              <Button color="inherit" onClick={handleSignOut}>Déconnexion</Button>
+            ) : !isAdminRoute && auth.status !== 'loading' && (
+              <Button component={Link} to="/admin" color="inherit">Espace marchand</Button>
+            )}
           </Stack>
         </Container>
       </Box>
